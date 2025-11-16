@@ -107,8 +107,6 @@ export function ExclusiveContent() {
 
   return (
     <section className="mt-12">
-      <PackSpotlight />
-
       <Tabs defaultValue="packs" className="w-full" onValueChange={onTabChange}>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
