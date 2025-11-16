@@ -3,8 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Plus, X, Video, Camera } from 'lucide-react';
+import { X, Video, Camera, Crown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,141 +18,29 @@ import {
   CarouselNext,
   CarouselPrevious,
   type CarouselApi,
-} from "@/components/ui/carousel"
+} from '@/components/ui/carousel';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { cn } from '@/lib/utils';
+import { MediaGrid, MediaGridSkeleton, Thumb, type MediaItem } from './media-grid';
+import { PackSpotlight } from './pack-spotlight';
 
 const { mediaItems } = placeholderImages;
 
 const photos = mediaItems.filter(item => item.type === 'photo');
 const videos = mediaItems.filter(item => item.type === 'video');
 
-const INITIAL_VISIBLE_COUNT = 9;
-const LOAD_MORE_COUNT = 9;
-
-function MediaGrid({
-  items,
-  showMore: initialShowMore,
-  onItemClick,
-}: {
-  items: typeof mediaItems;
-  showMore?: boolean;
-  onItemClick: (item: (typeof mediaItems)[0]) => void;
-}) {
-  const [visibleCount, setVisibleCount] = useState(initialShowMore ? INITIAL_VISIBLE_COUNT : items.length);
-
-  const visibleItems = items.slice(0, visibleCount);
-  const hasMore = visibleCount < items.length;
-  const remainingCount = items.length - visibleCount;
-
-  const handleShowMore = () => {
-    setVisibleCount(prevCount => Math.min(prevCount + LOAD_MORE_COUNT, items.length));
-  };
-
-  const renderMoreItem = () => {
-    if (!initialShowMore || !hasMore) return null;
-
-    return (
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-secondary/50 flex flex-col items-center justify-center text-center text-foreground gap-2 p-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full bg-card/80 hover:bg-card h-12 w-12 transition-transform hover:scale-110"
-            onClick={handleShowMore}
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-          <p className="font-semibold">Ver mais</p>
-          <p className="text-sm text-muted-foreground">({remainingCount}+ restantes)</p>
-        </div>
-    );
-  };
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-      {visibleItems.map(item => (
-        <div
-          key={item.id}
-          className="relative aspect-square w-full overflow-hidden rounded-lg group cursor-pointer"
-          onClick={() => onItemClick(item)}
-        >
-          {item.type === 'photo' ? (
-             <Image
-              src={item.url}
-              alt={`Media ${item.id}`}
-              data-ai-hint={item.hint}
-              width={400}
-              height={400}
-              unoptimized
-              className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
-            />
-          ) : (
-            <video 
-              src={item.url} 
-              autoPlay 
-              loop 
-              muted 
-              playsInline
-              className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
-            />
-          )}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100">
-              <div className="p-2 bg-black/50 rounded-full">
-                {item.type === 'video' ? <Video className="h-8 w-8 text-white" /> : <Camera className="h-8 w-8 text-white" />}
-              </div>
-            </div>
-        </div>
-      ))}
-      {renderMoreItem()}
-    </div>
-  );
-}
-
-function Thumb({
-  selected,
-  onClick,
-  item,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  item: typeof mediaItems[0];
-}) {
-  return (
-    <div className={cn("relative aspect-square h-20 flex-shrink-0 cursor-pointer", !selected && 'opacity-50')}>
-      <Button
-        onClick={onClick}
-        className="w-full h-full p-0 rounded-md overflow-hidden border-2 border-transparent data-[selected=true]:border-primary"
-        variant="ghost"
-        data-selected={selected}
-      >
-        {item.type === 'photo' ? (
-          <Image
-            src={item.url}
-            alt={`Thumbnail ${item.id}`}
-            width={80}
-            height={80}
-            unoptimized
-            className="object-cover w-full h-full"
-          />
-        ) : (
-          <div className="relative w-full h-full">
-            <video src={item.url} muted playsInline className="object-cover w-full h-full" />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <Video className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        )}
-      </Button>
-    </div>
-  );
-}
+const tabs = [
+  { value: 'packs', label: 'Packs', icon: Crown },
+  { value: 'photos', label: 'Fotos', icon: Camera },
+  { value: 'videos', label: 'Vídeos', icon: Video },
+];
 
 export function ExclusiveContent() {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
-  const [activeTabItems, setActiveTabItems] = useState(mediaItems);
+  const [activeTabItems, setActiveTabItems] = useState<MediaItem[]>(mediaItems);
   const [mainApi, setMainApi] = useState<CarouselApi>();
   const [thumbApi, setThumbApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const onThumbClick = useCallback(
     (index: number) => {
@@ -173,6 +60,11 @@ export function ExclusiveContent() {
   }, [mainApi, thumbApi]);
 
   useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), 450);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
     if (!mainApi) return;
     onSelect();
     mainApi.on('select', onSelect);
@@ -190,7 +82,7 @@ export function ExclusiveContent() {
     }
   }, [selectedMediaIndex, mainApi]);
 
-  const handleItemClick = (item: (typeof mediaItems)[0]) => {
+  const handleItemClick = (item: MediaItem) => {
     const index = activeTabItems.findIndex(i => i.id === item.id);
     if (index !== -1) {
       setSelectedMediaIndex(index);
@@ -200,7 +92,7 @@ export function ExclusiveContent() {
   const handleCloseDialog = () => {
     setSelectedMediaIndex(null);
   };
-  
+
   const onTabChange = (value: string) => {
     switch (value) {
       case 'photos':
@@ -215,48 +107,64 @@ export function ExclusiveContent() {
   };
 
   return (
-    <section className="mt-8">
-      <Tabs defaultValue="all" className="w-full" onValueChange={onTabChange}>
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold font-headline">Meus Packs Exclusivos</h2>
-            <TabsList className="grid grid-cols-3 md:w-auto md:inline-flex mb-0 bg-gray-100 rounded-lg">
-                <TabsTrigger value="all" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">Todos</TabsTrigger>
-                <TabsTrigger value="photos" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"><Camera className="mr-2 h-4 w-4"/>Fotos</TabsTrigger>
-                <TabsTrigger value="videos" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"><Video className="mr-2 h-4 w-4"/>Vídeos</TabsTrigger>
-            </TabsList>
+    <section className="mt-12">
+      <PackSpotlight />
+
+      <Tabs defaultValue="packs" className="w-full" onValueChange={onTabChange}>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">Área de membros</p>
+            <h2 className="text-3xl font-headline font-semibold text-white">Meus packs exclusivos</h2>
+          </div>
+          <TabsList className="glass-panel flex gap-1 rounded-full bg-white/10 p-1">
+            {tabs.map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-2 rounded-full px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/60 data-[state=active]:bg-white data-[state=active]:text-[hsl(var(--text-900))]"
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </div>
+
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Conteúdo exclusivo</h3>
-          <TabsContent value="all" className="mt-0">
-            <MediaGrid items={mediaItems} showMore onItemClick={handleItemClick} />
+          <p className="mb-4 text-sm text-white/70">
+            Skeleton loading habilitado. Enquanto os packs carregam aplicamos shimmer `var(--skeleton-highlight)` para evitar saltos.
+          </p>
+          <TabsContent value="packs" className="mt-0">
+            {isLoading ? <MediaGridSkeleton /> : <MediaGrid items={mediaItems} showMore onItemClick={handleItemClick} />}
           </TabsContent>
           <TabsContent value="photos" className="mt-0">
-            <MediaGrid items={photos} onItemClick={handleItemClick} />
+            {isLoading ? <MediaGridSkeleton /> : <MediaGrid items={photos} onItemClick={handleItemClick} />}
           </TabsContent>
           <TabsContent value="videos" className="mt-0">
-            <MediaGrid items={videos} onItemClick={handleItemClick} />
+            {isLoading ? <MediaGridSkeleton /> : <MediaGrid items={videos} onItemClick={handleItemClick} />}
           </TabsContent>
         </div>
       </Tabs>
-      <Dialog open={selectedMediaIndex !== null} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
-        <DialogContent className="max-w-4xl w-full h-full sm:h-auto sm:max-h-[90vh] p-0 bg-background border-0 flex flex-col justify-center">
-          <DialogHeader className="absolute top-0 left-0 right-0 z-20">
+
+      <Dialog open={selectedMediaIndex !== null} onOpenChange={isOpen => !isOpen && handleCloseDialog()}>
+        <DialogContent className="max-w-5xl w-full h-full sm:h-auto sm:max-h-[92vh] border border-white/10 bg-[var(--surface-card)]/95 p-0 shadow-soft backdrop-blur-3xl">
+          <DialogHeader className="absolute top-0 left-0 right-0 z-20 flex justify-end p-4">
             <DialogTitle className="sr-only">Visualizar Mídia</DialogTitle>
-             <DialogClose className="absolute right-2 top-2 bg-background/50 text-foreground rounded-full p-1 hover:bg-background">
-                <X className="h-5 w-5" />
-             </DialogClose>
+            <DialogClose className="rounded-full border border-white/20 bg-black/40 p-2 text-white transition hover:bg-black/60">
+              <X className="h-4 w-4" />
+            </DialogClose>
           </DialogHeader>
-          
-          <div className="flex-1 flex items-center justify-center min-h-0">
+
+          <div className="flex-1 min-h-0">
             <Carousel setApi={setMainApi} className="w-full h-full">
               <CarouselContent>
                 {activeTabItems.map((item, index) => (
-                  <CarouselItem key={index} className="flex items-center justify-center">
+                  <CarouselItem key={item.id} className="flex items-center justify-center">
                     {item.type === 'photo' ? (
-                      <div className="relative w-full h-full max-h-[calc(90vh-104px)] sm:max-h-[calc(90vh-120px)]">
-                        <Image 
-                          src={item.url} 
-                          alt={`Media ${item.id}`} 
+                      <div className="relative w-full h-full max-h-[calc(92vh-120px)]">
+                        <Image
+                          src={item.url}
+                          alt={`Media ${item.id}`}
                           fill
                           unoptimized
                           className="object-contain"
@@ -265,31 +173,27 @@ export function ExclusiveContent() {
                         />
                       </div>
                     ) : (
-                      <video 
-                        src={item.url} 
-                        controls 
+                      <video
+                        src={item.url}
+                        controls
                         autoPlay={index === currentSlide}
-                        className="max-h-[calc(90vh-104px)] sm:max-h-[calc(90vh-120px)] max-w-full" 
+                        className="max-h-[calc(92vh-140px)] max-w-full rounded-2xl border border-white/10"
                       />
                     )}
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/30 text-foreground hover:bg-background/50 hover:text-foreground border-0" />
-              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/30 text-foreground hover:bg-background/50 hover:text-foreground border-0" />
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 border border-white/20 bg-black/30 text-white hover:bg-black/50" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 border border-white/20 bg-black/30 text-white hover:bg-black/50" />
             </Carousel>
           </div>
 
-          <div className="flex-shrink-0 p-4 pt-2 bg-background/50">
-             <Carousel setApi={setThumbApi} opts={{ align: 'start', containScroll: 'keepSnaps' }}>
+          <div className="flex-shrink-0 p-4 bg-black/30">
+            <Carousel setApi={setThumbApi} opts={{ align: 'start', containScroll: 'keepSnaps' }}>
               <CarouselContent className="-ml-2">
                 {activeTabItems.map((item, index) => (
-                  <CarouselItem key={item.id} className="pl-2 basis-auto">
-                    <Thumb
-                      onClick={() => onThumbClick(index)}
-                      selected={index === currentSlide}
-                      item={item}
-                    />
+                  <CarouselItem key={item.id} className="basis-auto pl-2">
+                    <Thumb onClick={() => onThumbClick(index)} selected={index === currentSlide} item={item} />
                   </CarouselItem>
                 ))}
               </CarouselContent>

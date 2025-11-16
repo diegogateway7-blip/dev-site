@@ -1,0 +1,107 @@
+:root {
+  /* Brand gradients */
+  --gradient-main: linear-gradient(135deg, #6B63FF 0%, #9E57E8 55%, #D85DB2 100%);
+  --gradient-soft: linear-gradient(145deg, rgba(107, 99, 255, 0.12), rgba(216, 93, 178, 0.18));
+  --gradient-card: radial-gradient(circle at 15% 15%, rgba(158, 87, 232, 0.32), transparent 45%),
+    radial-gradient(circle at 85% 0%, rgba(216, 93, 178, 0.28), transparent 40%);
+
+  /* Palette tokens */
+  --purple-600: 243 100% 69%;
+  --purple-500: 264 86% 70%;
+  --magenta: 319 61% 60%;
+  --amber: 35 92% 60%;
+  --lilac-200: 257 100% 95%;
+  --lilac-100: 264 66% 97%;
+  --cta-green: 149 65% 51%;
+  --cta-green-700: 154 69% 40%;
+  --text-900: 247 28% 11%;
+  --muted-700: 258 21% 65%;
+  --dark-900: #161426;
+  --text-inverse: 240 33% 96%;
+
+  /* Core semantic tokens (HSL for Tailwind) */
+  --background: 247 36% 11%;
+  --foreground: 240 33% 96%;
+  --card: 258 65% 97%;
+  --card-foreground: 247 28% 16%;
+  --popover: 248 32% 14%;
+  --popover-foreground: 240 33% 96%;
+  --primary: var(--purple-600);
+  --primary-foreground: 240 33% 96%;
+  --secondary: 257 70% 92%;
+  --secondary-foreground: 247 28% 16%;
+  --muted: 257 35% 60%;
+  --muted-foreground: 260 15% 82%;
+  --accent: 265 100% 88%;
+  --accent-foreground: 247 28% 16%;
+  --destructive: 348 90% 57%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 263 36% 32%;
+  --input: 263 36% 32%;
+  --ring: var(--purple-500);
+  --chart-1: 265 84% 72%;
+  --chart-2: 320 70% 60%;
+  --chart-3: 36 92% 60%;
+  --chart-4: 153 70% 46%;
+  --chart-5: 210 20% 25%;
+
+  /* Layout tokens */
+  --sidebar-background: 247 36% 11%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: var(--purple-600);
+  --sidebar-primary-foreground: 240 33% 96%;
+  --sidebar-accent: 247 28% 16%;
+  --sidebar-accent-foreground: 240 33% 96%;
+  --sidebar-border: 256 30% 28%;
+  --sidebar-ring: var(--purple-500);
+
+  /* Radii & shadows */
+  --radius: 1.25rem;
+  --radius-lg: 2rem;
+  --shadow-soft: 0 30px 80px rgba(17, 12, 34, 0.35);
+  --shadow-glow: 0 15px 60px rgba(158, 87, 232, 0.35);
+  --shadow-glass: 0 8px 30px rgba(12, 8, 24, 0.45);
+
+  /* Glass surfaces */
+  --surface-card: #f7f4ff;
+  --surface-card-dark: rgba(25, 20, 38, 0.85);
+  --surface-glass: rgba(255, 255, 255, 0.08);
+  --surface-glass-strong: rgba(255, 255, 255, 0.15);
+  --surface-glass-dark: rgba(13, 10, 24, 0.65);
+  --surface-hero: rgba(26, 20, 45, 0.9);
+  --border-subtle: rgba(255, 255, 255, 0.14);
+
+  /* Helpers */
+  --skeleton-base: rgba(255, 255, 255, 0.08);
+  --skeleton-highlight: rgba(255, 255, 255, 0.24);
+  --halo: rgba(165, 120, 255, 0.35);
+}
+
+:root.dark {
+  --background: 247 36% 7%;
+  --foreground: 240 33% 96%;
+  --card: 251 28% 14%;
+  --card-foreground: 240 33% 96%;
+  --popover: 251 28% 12%;
+  --popover-foreground: 240 33% 96%;
+  --secondary: 251 28% 20%;
+  --secondary-foreground: 240 33% 93%;
+  --muted: 257 23% 30%;
+  --muted-foreground: 258 20% 75%;
+  --accent: 265 60% 30%;
+  --accent-foreground: 240 33% 96%;
+  --border: 252 22% 24%;
+  --input: 252 22% 24%;
+  --ring: var(--magenta);
+  --sidebar-background: 247 36% 7%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-accent: 248 24% 16%;
+  --surface-card: rgba(26, 19, 41, 0.9);
+  --surface-glass: rgba(255, 255, 255, 0.05);
+  --surface-glass-strong: rgba(255, 255, 255, 0.12);
+  --surface-glass-dark: rgba(12, 8, 24, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --skeleton-base: rgba(255, 255, 255, 0.04);
+  --skeleton-highlight: rgba(255, 255, 255, 0.16);
+}
+
