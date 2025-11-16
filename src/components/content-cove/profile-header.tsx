@@ -1,12 +1,6 @@
-import { Globe, Sparkles } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-const navLinks = [
-  { label: 'Moodboard', href: '#moodboard' },
-  { label: 'Packs', href: '#packs' },
-  { label: 'Suporte', href: '#support' },
-];
 
 const LockLogo = () => (
   <span className="relative inline-flex items-center gap-2 rounded-full px-3 py-1 font-headline text-2xl font-semibold text-white">
@@ -37,8 +31,7 @@ export function ProfileHeader() {
               <div className="flex items-center gap-2 text-sm text-white/70">
                 <Badge variant="glass" className="uppercase text-[10px] tracking-widest">+18</Badge>
                 <span className="inline-flex items-center gap-1">
-                  <Sparkles className="h-4 w-4 text-[#F7A83A]" />
-                  Conteúdo diário exclusivo
+                  Conteúdo exclusivo
                 </span>
               </div>
             </div>
@@ -49,18 +42,8 @@ export function ProfileHeader() {
               <span className="h-2 w-2 rounded-full bg-[var(--cta-green)] shadow-glow" />
               Online agora
             </div>
-            <div className="hidden md:flex items-center gap-4 text-sm text-white/70">
-              {navLinks.map(link => (
-                <a key={link.label} href={link.href} className="transition-colors hover:text-white">
-                  {link.label}
-                </a>
-              ))}
-            </div>
             <Button variant="glass" size="icon" aria-label="Alterar idioma">
               <Globe className="h-5 w-5" />
-            </Button>
-            <Button variant="cta" size="sm">
-              Entrar no VIP
             </Button>
           </div>
         </div>
