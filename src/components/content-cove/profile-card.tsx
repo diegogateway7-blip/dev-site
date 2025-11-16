@@ -62,18 +62,18 @@ export function ProfileCard() {
                 <AvatarFallback>LS</AvatarFallback>
               </Avatar>
             </div>
-            <div className="space-y-2 text-white">
+            <div className="space-y-2 text-[hsl(var(--text-900))]">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-3xl font-headline font-semibold text-white">Larissa Santos</h1>
+                <h1 className="text-3xl font-headline font-semibold text-[hsl(var(--text-900))]">Larissa Santos</h1>
                 <VerifiedIcon />
               </div>
-              <p className="text-white/80">@larissasantos</p>
-              <p className="max-w-lg text-lg text-white/90">
+              <p className="text-[hsla(var(--text-900),_0.7)]">@larissasantos</p>
+              <p className="max-w-lg text-lg text-[hsla(var(--text-900),_0.85)]">
                 Sensual premium & intimista. Packs exclusivos, bastidores RAW e roleplays executivos sob demanda.
               </p>
               <div className="flex flex-wrap gap-3">
                 {perks.map(item => (
-                  <span key={item} className="glass-panel rounded-full px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white">
+                  <span key={item} className="glass-panel rounded-full px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-[hsl(var(--text-900))]">
                     {item}
                   </span>
                 ))}
@@ -92,18 +92,18 @@ export function ProfileCard() {
           </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-4 rounded-3xl border border-white/10 bg-[var(--surface-card)]/80 p-6 text-white shadow-soft backdrop-blur-xl">
+        <div className="w-full max-w-sm space-y-4 rounded-3xl border border-white/10 bg-white p-6 text-[hsl(var(--text-900))] shadow-soft">
           <div className="flex items-center gap-3">
             <Crown className="h-8 w-8 text-[#F7A83A]" />
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-white/70">Pack destaque</p>
-              <h3 className="text-xl font-semibold text-white">CEO Secrets 4K</h3>
+              <p className="text-sm uppercase tracking-[0.3em] text-[hsla(var(--text-900),_0.6)]">Pack destaque</p>
+              <h3 className="text-xl font-semibold text-[hsl(var(--text-900))]">CEO Secrets 4K</h3>
             </div>
           </div>
-          <p className="text-sm text-white/85">
+          <p className="text-sm text-[hsla(var(--text-900),_0.75)]">
             Inclui 24 vídeos POV, bastidores 4:5 e áudios imersivos. Atualizado mensalmente com drop secreto.
           </p>
-          <div className="space-y-2 rounded-2xl bg-white/90 p-4 text-[hsl(var(--text-900))]">
+          <div className="space-y-2 rounded-2xl bg-[var(--lilac-100)] p-4 text-[hsl(var(--text-900))]">
             <div className="flex items-center gap-2 text-sm">
               <ShieldCheck className="h-4 w-4 text-[#2FCF7F]" />
               Sigilo garantido
