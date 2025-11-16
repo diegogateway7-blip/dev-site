@@ -1,8 +1,6 @@
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Camera, CheckCircle2, Palette, PlayCircle, Sparkles } from 'lucide-react';
-import placeholderImages from '@/lib/placeholder-images.json';
+import { Camera, CheckCircle2, Palette, Sparkles } from 'lucide-react';
 
 const packFeatures = [
   '24 vídeos POV 4K + bastidores RAW',
@@ -19,11 +17,8 @@ const imageGuidelines = [
 ];
 
 export function PackSpotlight() {
-  const heroPhoto = placeholderImages.mediaItems.find(item => item.type === 'photo');
-  const moodboardShots = placeholderImages.mediaItems.filter(item => item.type === 'photo').slice(1, 5);
-
   return (
-    <section className="mb-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]" id="packs">
+    <section className="mb-10" id="packs">
       <div className="rounded-[32px] border border-white/10 bg-[var(--surface-card)]/85 p-8 shadow-soft backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="premium" className="text-[11px] uppercase tracking-[0.3em]">
@@ -69,39 +64,6 @@ export function PackSpotlight() {
               </li>
             ))}
           </ul>
-        </div>
-      </div>
-
-      <div className="space-y-4 rounded-[32px] border border-white/10 bg-[var(--surface-card)]/60 p-6 shadow-soft backdrop-blur-xl" id="moodboard">
-        <div className="relative h-72 w-full overflow-hidden rounded-3xl">
-          {heroPhoto && (
-            <Image
-              src={heroPhoto.url}
-              alt="Moodboard destaque"
-              width={1200}
-              height={960}
-              unoptimized
-              className="h-full w-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
-          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl bg-black/40 p-3 text-white backdrop-blur">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Guideline</p>
-              <p className="text-lg font-semibold">Glass Intimate</p>
-            </div>
-            <Button variant="glass" size="icon" aria-label="Visualizar vídeos">
-              <PlayCircle className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {moodboardShots.map(item => (
-            <div key={item.id} className="relative h-36 overflow-hidden rounded-2xl border border-white/10">
-              <Image src={item.url} alt={`Inspiração ${item.id}`} width={600} height={600} unoptimized className="h-full w-full object-cover" />
-              <span className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
-            </div>
-          ))}
         </div>
       </div>
     </section>
