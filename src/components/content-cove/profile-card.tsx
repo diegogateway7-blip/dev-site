@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Crown, ShieldCheck, Clock4 } from 'lucide-react';
@@ -115,9 +114,6 @@ export function ProfileCard() {
             </div>
           </div>
           <div className="grid gap-3">
-            <Button variant="cta" size="lg" className="w-full">
-              Desbloquear pack exclusivo
-            </Button>
             <PixGiftDialog />
           </div>
         </div>
