@@ -28,7 +28,7 @@ const photos = mediaItems.filter(item => item.type === 'photo');
 const videos = mediaItems.filter(item => item.type === 'video');
 
 const tabs = [
-  { value: 'packs', label: 'Packs', icon: Crown },
+  { value: 'packs', label: 'Todos', icon: Crown },
   { value: 'photos', label: 'Fotos', icon: Camera },
   { value: 'videos', label: 'Vídeos', icon: Video },
 ];
