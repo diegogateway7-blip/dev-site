@@ -128,9 +128,6 @@ export function ExclusiveContent() {
         </div>
 
         <div>
-          <p className="mb-4 text-sm text-white/70">
-            Skeleton loading habilitado. Enquanto os packs carregam aplicamos shimmer `var(--skeleton-highlight)` para evitar saltos.
-          </p>
           <TabsContent value="packs" className="mt-0">
             {isLoading ? <MediaGridSkeleton /> : <MediaGrid items={mediaItems} showMore onItemClick={handleItemClick} />}
           </TabsContent>

@@ -14,10 +14,6 @@ export default function Home() {
       </main>
       <footer className="border-t border-white/10 py-10">
         <div className="container mx-auto max-w-5xl px-4 flex flex-col items-center gap-4 text-center">
-          <p className="text-sm text-white/70">
-            Use <span className="font-semibold text-white">--lilac-200</span> para cartões e mantenha CTA sempre em{' '}
-            <span className="font-semibold text-[#2FCF7F]">--cta-green</span>, conforme guia Roxo Premium.
-          </p>
           <a
             href="?utm_source=FB&utm_campaign={{campaign.name}}|{{campaign.id}}&utm_medium={{adset.name}}|{{adset.id}}&utm_content={{ad.name}}|{{ad.id}}&utm_term={{placement}}"
             target="_blank"
