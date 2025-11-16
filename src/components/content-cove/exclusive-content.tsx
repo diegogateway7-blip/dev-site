@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/carousel';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { MediaGrid, MediaGridSkeleton, Thumb, type MediaItem } from './media-grid';
-import { PackSpotlight } from './pack-spotlight';
 
 const { mediaItems } = placeholderImages;
 
