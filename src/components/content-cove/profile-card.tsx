@@ -71,13 +71,6 @@ export function ProfileCard() {
               <p className="max-w-lg text-lg text-[hsla(var(--text-900),_0.85)]">
                 Sensual premium & intimista. Packs exclusivos, bastidores RAW e roleplays executivos sob demanda.
               </p>
-              <div className="flex flex-wrap gap-3">
-                {perks.map(item => (
-                  <span key={item} className="glass-panel rounded-full px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-[hsl(var(--text-900))]">
-                    {item}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
 
