@@ -103,17 +103,7 @@ export function PackSpotlight() {
             </div>
           ))}
         </div>
-        <div className="rounded-2xl border border-dashed border-white/30 p-4 text-sm text-white/80">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
-            <Sparkles className="h-4 w-4" />
-            versão dark mode
-          </p>
-          <p className="mt-2 text-white">
-            Use `body.dark` para alternar tokens automáticos. Cards migram para `var(--surface-card)` escuro e CTAs permanecem verdes para contraste.
-          </p>
-        </div>
       </div>
     </section>
   );
 }
-

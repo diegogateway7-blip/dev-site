@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['Arial', 'Helvetica', 'Selvia Genatu', 'sans-serif'],
+        headline: ['"Gilda Display"', '"Selvia Genatu"', 'Georgia', 'serif'],
         code: ['monospace'],
       },
       colors: {
