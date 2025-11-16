@@ -1,8 +1,7 @@
 import { Globe, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import placeholderImages from '@/lib/placeholder-images.json';
+import { BrandLogo } from '@/components/content-cove/brand-logo';
 
 const navLinks = [
   { label: 'Moodboard', href: '#moodboard' },
@@ -11,22 +10,13 @@ const navLinks = [
 ];
 
 export function ProfileHeader() {
-  const { profileAvatar } = placeholderImages.profile;
-
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[rgba(16,14,30,0.85)] backdrop-blur-2xl">
       <nav className="container mx-auto max-w-5xl px-4">
         <div className="flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <span className="absolute inset-0 rounded-full bg-[var(--gradient-main)] opacity-70 blur-xl" aria-hidden />
-              <Avatar className="relative h-12 w-12 border-2 border-white/40 shadow-soft">
-                <AvatarImage src={profileAvatar.url} alt={profileAvatar.alt} />
-                <AvatarFallback>LS</AvatarFallback>
-              </Avatar>
-            </div>
+            <BrandLogo />
             <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">Roxo Premium</p>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-2xl font-headline font-semibold text-white">SigiloVip</span>
                 <Badge variant="glass" className="uppercase text-[10px] tracking-widest">+18</Badge>
