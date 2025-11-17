@@ -41,7 +41,7 @@ export function ProfileCard() {
           data-ai-hint={coverImage.hint}
           width={coverImage.width}
           height={coverImage.height}
-          unoptimized
+          
           priority
           className="h-full w-full object-cover"
         />

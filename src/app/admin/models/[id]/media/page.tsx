@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
 import { useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -39,7 +39,7 @@ export default function AdminModelMediaPage() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       let query = supabase.from("media").select("*", { count: "exact" }).eq("modelo_id", modelId);
       if (busca) {
         query = query.ilike("descricao", `%${busca}%`);
@@ -65,7 +65,7 @@ export default function AdminModelMediaPage() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       let ext = file.name.split('.').pop();
       let filename = `${tipo}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const { data, error } = await supabase.storage.from("media").upload(filename, file);
@@ -97,7 +97,7 @@ export default function AdminModelMediaPage() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       const mediaItem = media.find(m => m.id === pendingDeleteId);
       if (mediaItem && mediaItem.url) {
         const path = mediaItem.url.split('/storage/v1/object/public/media/')[1];

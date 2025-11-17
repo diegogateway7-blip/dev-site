@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError("Usuário ou senha inválidos");
@@ -48,3 +48,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+

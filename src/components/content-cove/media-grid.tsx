@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion'; // Importa a motion
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Camera, Play, Plus, Video } from 'lucide-react';
@@ -24,6 +25,29 @@ type MediaGridProps = {
   onItemClick: (item: MediaItem) => void;
 };
 
+// Variantes de animação para o container e os itens
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05, // Atraso entre a animação de cada item filho
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+    },
+  },
+};
+
 export function MediaGrid({ items, showMore = false, onItemClick }: MediaGridProps) {
   const [visibleCount, setVisibleCount] = useState(showMore ? INITIAL_VISIBLE_COUNT : items.length);
 
@@ -36,7 +60,12 @@ export function MediaGrid({ items, showMore = false, onItemClick }: MediaGridPro
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+    <motion.div
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4"
+      variants={gridVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {visibleItems.map(item => (
         <MediaTile key={item.id} item={item} onClick={() => onItemClick(item)} />
       ))}
@@ -52,7 +81,7 @@ export function MediaGrid({ items, showMore = false, onItemClick }: MediaGridPro
           <span className="absolute inset-0 bg-[var(--gradient-soft)] opacity-0 transition-opacity group-hover:opacity-100" />
         </button>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -65,7 +94,8 @@ function MediaTile({ item, onClick }: MediaTileProps) {
   const isVideo = item.type === 'video';
 
   return (
-    <div
+    <motion.div
+      variants={itemVariants} // Aplica a variante de animação do item
       className="group relative aspect-square w-full overflow-hidden rounded-2xl border border-white/10 bg-black/50 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-glow"
       onClick={onClick}
     >
@@ -85,7 +115,7 @@ function MediaTile({ item, onClick }: MediaTileProps) {
           data-ai-hint={item.hint}
           width={600}
           height={600}
-          unoptimized
+          
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       )}
@@ -117,7 +147,7 @@ function MediaTile({ item, onClick }: MediaTileProps) {
           {isVideo ? <Play className="h-4 w-4" /> : <Camera className="h-4 w-4" />}
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -157,7 +187,7 @@ export function Thumb({ selected, onClick, item }: ThumbProps) {
       )}
     >
       {item.type === 'photo' ? (
-        <Image src={item.url} alt={`Thumbnail ${item.id}`} width={80} height={80} unoptimized className="h-full w-full object-cover" />
+        <Image src={item.url} alt={`Thumbnail ${item.id}`} width={80} height={80}  className="h-full w-full object-cover" />
       ) : (
         <div className="relative h-full w-full">
           <video src={item.url} muted playsInline className="h-full w-full object-cover" />

@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react'; // Adicionado Suspense
 import AdminSidebar from '@/components/ui/admin-sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
+import { ProgressBar } from '@/components/ui/progress-bar'; // Importa o ProgressBar
 
 const SESSION_TIMEOUT_MIN = 30;
 
@@ -37,10 +38,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar onLogout={()=>handleLogout(true)} />
-      <div className="flex-1 ml-56">
-        <main className="container mx-auto py-8">{children}</main>
-      </div>
+        {/* Suspense é necessário porque ProgressBar usa hooks de navegação */}
+        <Suspense fallback={null}>
+            <ProgressBar />
+        </Suspense>
+        <AdminSidebar onLogout={() => handleLogout(true)} />
+        <div className="flex-1 ml-60"> {/* Ajustado o margin-left para corresponder à nova largura do sidebar */}
+            <main className="container mx-auto py-8 px-6">{children}</main>
+        </div>
     </div>
   );
 }

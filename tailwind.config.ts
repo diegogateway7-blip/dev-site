@@ -10,8 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Arial', 'Helvetica', 'Selvia Genatu', 'sans-serif'],
-        headline: ['"Gilda Display"', '"Selvia Genatu"', 'Georgia', 'serif'],
+        // Definindo as variáveis CSS como a fonte de verdade
+        body: ['var(--font-body)', 'sans-serif'],
+        headline: ['var(--font-headline)', 'serif'],
         code: ['monospace'],
       },
       colors: {

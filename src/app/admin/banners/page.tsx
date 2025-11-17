@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminBannersPage() {
@@ -20,7 +20,7 @@ export default function AdminBannersPage() {
   async function fetchBanners() {
     setLoading(true); setError(null);
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       const { data, error } = await supabase.from('banners').select('*').order('ordem');
       if(error) throw error;
       setBanners(data||[]);
@@ -33,7 +33,7 @@ export default function AdminBannersPage() {
     setLoading(true); setError(null);
     try {
       let fileUrl = null;
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       if(bannerFile) {
         const { data, error } = await supabase.storage.from('banners').upload(`${Date.now()}_${bannerFile.name}`, bannerFile);
         if(error) throw error;
@@ -54,7 +54,7 @@ export default function AdminBannersPage() {
   }
 
   async function handleToggle(id: string, value: boolean) {
-    const supabase = getSupabaseClient();
+    const supabase = createClient();
     await supabase.from('banners').update({ ativo: value }).eq('id', id);
     fetchBanners();
   }
@@ -95,3 +95,4 @@ export default function AdminBannersPage() {
     </div>
   );
 }
+

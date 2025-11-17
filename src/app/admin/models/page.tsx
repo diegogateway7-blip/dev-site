@@ -1,46 +1,42 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
 import Link from "next/link";
-
-const PAGE_SIZE = 10;
+import { getColumns } from "./columns";
+import { Model } from "@/types";
+import { DataTable } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Users } from "lucide-react";
 
 export default function AdminModelsPage() {
-  const [models, setModels] = useState<any[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busca, setBusca] = useState("");
-  const [redeFiltro, setRedeFiltro] = useState("");
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     fetchModels();
-    // eslint-disable-next-line
-  }, [busca, redeFiltro, page]);
+  }, []);
 
   async function fetchModels() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      let query = supabase.from("models").select("*", { count: "exact" });
-      if (busca) {
-        query = query.ilike("nome", `%${busca}%`);
-      }
-      if (redeFiltro) {
-        query = query.ilike("redes", `%${redeFiltro}%`);
-      }
-      query = query.order("id", { ascending: false }).range((page-1)*PAGE_SIZE, (page*PAGE_SIZE)-1);
-      const { data, count, error } = await query;
+      const supabase = createClient();
+      let { data, error } = await supabase
+        .from("models")
+        .select("*")
+        .order("id", { ascending: false });
+
       if (error) {
         setError("Erro ao buscar modelos");
         setModels([]);
       } else {
         setModels(data || []);
-        setTotal(count || 0);
       }
-    } catch(e) {
+    } catch (e) {
       setError("Erro inesperado ao carregar modelos");
       setModels([]);
     } finally {
@@ -48,56 +44,59 @@ export default function AdminModelsPage() {
     }
   }
 
-  function handleBuscaChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setBusca(e.target.value);
-    setPage(1);
-  }
-  function handleRedeChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setRedeFiltro(e.target.value);
-    setPage(1);
+  const handleModelDeleted = () => {
+    fetchModels();
+  };
+
+  const columns = getColumns(handleModelDeleted);
+
+  const filteredData = models.filter(model =>
+    model.nome.toLowerCase().includes(filter.toLowerCase()) ||
+    (model.bio && model.bio.toLowerCase().includes(filter.toLowerCase()))
+  );
+
+  if (!loading && !error && models.length === 0) {
+    return (
+        <EmptyState
+            icon={Users}
+            title="Nenhum modelo encontrado"
+            description="Parece que você ainda não adicionou nenhum modelo. Comece adicionando o primeiro para vê-lo aparecer aqui."
+            actionHref="/admin/models/new"
+            actionLabel="Adicionar Modelo"
+        />
+    )
   }
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2 md:mb-0">Modelos</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Gerenciar Modelos</h2>
+          <p className="text-muted-foreground">
+            Adicione, edite e gerencie os modelos da plataforma.
+          </p>
         </div>
-        <div className="flex gap-2 flex-1 max-w-xl">
-          <input value={busca} onChange={handleBuscaChange} className="border p-2 rounded w-full" placeholder="Buscar por nome..." />
-          <input value={redeFiltro} onChange={handleRedeChange} className="border p-2 rounded w-full" placeholder="Buscar por redes sociais..." />
-          <Link href="/admin/models/new" className="bg-blue-600 text-white px-4 py-2 rounded whitespace-nowrap">Adicionar Modelo</Link>
-        </div>
+        <Button asChild>
+          <Link href="/admin/models/new">Adicionar Modelo</Link>
+        </Button>
       </div>
-      {loading && <div>Carregando...</div>}
-      {error && <div className="text-red-600 mb-3">{error}</div>}
-
-      <div className="grid gap-4">
-        {models.length === 0 && !loading && <div>Nenhum modelo cadastrado ainda.</div>}
-        {models.map(model => (
-          <div key={model.id} className="p-4 bg-white rounded shadow flex items-center gap-6">
-            {model.avatar_url ? (
-              <img src={model.avatar_url} alt="avatar" className="w-20 h-20 object-cover rounded-full border" />
-            ) : (
-              <div className="w-20 h-20 bg-gray-200 rounded-full" />
-            )}
-            <div className="flex-1">
-              <div className="font-bold text-lg">{model.nome}</div>
-              <div className="text-gray-600 text-sm">{model.bio}</div>
-            </div>
-            <Link href={`/admin/models/${model.id}`} className="text-blue-600 hover:underline">Editar</Link>
-          </div>
-        ))}
+      
+      <div className="mb-4">
+        <Input
+          placeholder="Filtrar por nome ou bio..."
+          value={filter}
+          onChange={(event) => setFilter(event.target.value)}
+          className="max-w-sm"
+        />
       </div>
 
-      {/* Paginação */}
-      {(total > PAGE_SIZE) && (
-        <div className="flex gap-4 justify-center py-6">
-          <button className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50" disabled={page === 1} onClick={()=>setPage(v=>v-1)}>Anterior</button>
-          <span className="self-center">Página {page} de {Math.ceil(total/PAGE_SIZE)}</span>
-          <button className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50" disabled={page === Math.ceil(total/PAGE_SIZE)} onClick={()=>setPage(v=>v+1)}>Próxima</button>
-        </div>
+      {loading && <div className="text-center py-4">Carregando dados...</div>}
+      {error && <div className="text-red-500 text-center py-4">{error}</div>}
+      
+      {!loading && !error && models.length > 0 && (
+        <DataTable columns={columns} data={filteredData} />
       )}
     </div>
   );
 }
+

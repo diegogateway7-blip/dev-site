@@ -1,104 +1,164 @@
 "use client";
-import { useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import Image from "next/image";
+import { Media } from "@/types"; // Usando o tipo centralizado
 
-export default function MediaSearchPage() {
+// Imports de UI
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Search, Trash2, Video, Camera } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+
+export default function MediaLibraryPage() {
   const { toast } = useToast();
-  const [busca, setBusca] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [modelo, setModelo] = useState("");
-  const [midias, setMidias] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string|null>(null);
-  const [error, setError] = useState<string|null>(null);
+  const [filters, setFilters] = useState({ description: "", type: "", modelId: "" });
+  const [mediaItems, setMediaItems] = useState<Media[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleBuscar(e: any) {
-    e.preventDefault();
-    setLoading(true); setError(null);
-    try {
-      const supabase = getSupabaseClient();
-      let query = supabase.from("media").select("*", { count: "exact" });
-      if (busca) query = query.ilike("descricao", `%${busca}%`);
-      if (tipo) query = query.eq("tipo", tipo);
-      if (modelo) query = query.eq("modelo_id", modelo);
-      const { data, error } = await query.order("created_at", { ascending: false }).limit(100);
-      if (error) throw error;
-      setMidias(data||[]);
-    } catch(e:any) { setError(e?.message||"Erro ao buscar!"); setMidias([]); }
-    setLoading(false);
-  }
+  useEffect(() => {
+    // Carrega as mídias mais recentes ao iniciar a página
+    fetchMedia();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function confirmDelete() {
-    if (!pendingDeleteId) return;
+  async function fetchMedia(searchFilters = filters) {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      const mediaItem = midias.find(m => m.id === pendingDeleteId);
-      if (mediaItem && mediaItem.url) {
-        const path = mediaItem.url.split('/storage/v1/object/public/media/')[1];
-        if (path) {
-          await supabase.storage.from("media").remove([path]);
-        }
-      }
-      const { error: delError } = await supabase.from("media").delete().eq("id", pendingDeleteId);
-      if (delError) throw delError;
-      setMidias(midias.filter(m=>m.id !== pendingDeleteId));
-      toast({ title: "Mídia removida com sucesso!" });
-    } catch(e: any) {
-      setError("Erro ao remover: " + (e?.message || ""));
-      toast({ title: "Erro ao remover mídia", description: e?.message || "", variant: "destructive" });
+      const supabase = createClient();
+      let query = supabase.from("media").select("*, models(nome)");
+      if (searchFilters.description) query = query.ilike("descricao", `%${searchFilters.description}%`);
+      if (searchFilters.type) query = query.eq("tipo", searchFilters.type);
+      if (searchFilters.modelId) query = query.eq("modelo_id", searchFilters.modelId);
+      
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(50);
+      if (error) throw error;
+      setMediaItems(data as Media[]);
+    } catch (e: any) {
+      setError(e?.message || "Erro ao buscar mídias!");
+      setMediaItems([]);
     } finally {
       setLoading(false);
-      setPendingDeleteId(null);
     }
   }
+  
+  const handleDelete = async (mediaItem: Media) => {
+    try {
+        const supabase = createClient();
+        if (mediaItem.url) {
+            const path = new URL(mediaItem.url).pathname.split('/media/').pop();
+            if (path) {
+                await supabase.storage.from("media").remove([path]);
+            }
+        }
+        const { error } = await supabase.from("media").delete().eq("id", mediaItem.id);
+        if (error) throw error;
+        
+        setMediaItems(prev => prev.filter(m => m.id !== mediaItem.id));
+        toast({ title: "Mídia removida com sucesso!" });
+    } catch (e: any) {
+        toast({ title: "Erro ao remover mídia", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleFilterChange = (key: 'description' | 'modelId' | 'type', value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchMedia();
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white rounded shadow mt-6">
-      <h2 className="text-2xl font-bold mb-6">Buscar/Apagar Mídias</h2>
-      <form onSubmit={handleBuscar} className="flex gap-3 mb-6">
-        <input type="text" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Descrição..." className="border p-2 rounded flex-1" />
-        <select value={tipo} onChange={e=>setTipo(e.target.value)} className="border rounded p-2">
-          <option value="">Todos</option>
-          <option value="photo">Foto</option>
-          <option value="video">Vídeo</option>
-        </select>
-        <input type="text" value={modelo} onChange={e=>setModelo(e.target.value)} placeholder="ID da Modelo (opcional)" className="border p-2 rounded flex-1" />
-        <button className="bg-blue-600 text-white rounded px-4 py-2" disabled={loading}>{loading?'Buscando...':'Buscar'}</button>
-      </form>
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-        {midias.map(m=>
-          <div key={m.id} className="relative p-2 bg-gray-50 rounded shadow flex flex-col">
-            {m.tipo==='photo' ? <img src={m.url} className="rounded object-cover w-full h-32" alt="foto" /> : <video src={m.url} className="rounded object-cover w-full h-32" />}
-            <div className="text-xs mt-1 text-gray-700">{m.descricao}</div>
-            <div className="text-xs text-gray-400 mb-1">Modelo: {m.modelo_id?.slice(0,8)||'-'}</div>
-            <div className="text-xs text-gray-400 mb-1">ID: {m.id?.slice(0,8)}</div>
-            <div className="flex gap-2 mt-auto items-center">
-              <Dialog open={pendingDeleteId===m.id} onOpenChange={v=>setPendingDeleteId(v?m.id:null)}>
-                <DialogTrigger asChild>
-                  <button onClick={()=>setPendingDeleteId(m.id)} className="text-xs px-2 py-1 rounded bg-red-700 text-white hover:bg-red-900">Excluir</button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Confirmar Exclusão</DialogTitle>
-                    <DialogDescription>Deseja realmente deletar esta mídia?</DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <button className="bg-gray-200 rounded px-4 py-2">Cancelar</button>
-                    </DialogClose>
-                    <button onClick={confirmDelete} className="bg-red-600 text-white rounded px-4 py-2" disabled={loading}>Excluir</button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        )}
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Biblioteca de Mídia</h2>
+          <p className="text-muted-foreground">Gerencie todas as fotos e vídeos da plataforma.</p>
+        </div>
       </div>
+      
+      <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 border border-dashed rounded-lg">
+          <Input placeholder="Buscar por descrição..." value={filters.description} onChange={e => handleFilterChange('description', e.target.value)} />
+          <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+              <SelectTrigger><SelectValue placeholder="Filtrar por tipo" /></SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="">Todos os Tipos</SelectItem>
+                  <SelectItem value="photo">Foto</SelectItem>
+                  <SelectItem value="video">Vídeo</SelectItem>
+              </SelectContent>
+          </Select>
+          <Input placeholder="ID do Modelo (opcional)" value={filters.modelId} onChange={e => handleFilterChange('modelId', e.target.value)} />
+          <Button type="submit" disabled={loading} className="w-full"><Search className="mr-2 h-4 w-4" />{loading ? 'Buscando...' : 'Buscar'}</Button>
+      </form>
+
+      {error && <div className="text-red-500 bg-red-500/10 p-4 rounded-md mb-6">{error}</div>}
+
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}
+        </div>
+      ) : mediaItems.length === 0 ? (
+        <EmptyState icon={ImageIcon} title="Nenhuma mídia encontrada" description="Nenhuma mídia corresponde aos filtros aplicados ou nenhuma foi enviada ainda." actionHref="/admin/models" actionLabel="Gerenciar Modelos"/>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {mediaItems.map(item => <MediaCard key={item.id} item={item} onDelete={handleDelete} />)}
+        </div>
+      )}
     </div>
   );
 }
+
+// Componente para o Card de Mídia
+function MediaCard({ item, onDelete }: { item: Media; onDelete: (item: Media) => void }) {
+  return (
+    <Card className="overflow-hidden group">
+      <CardHeader className="p-0 relative">
+        <div className="aspect-square w-full relative">
+            {item.tipo === 'photo' ? (
+                <Image src={item.url} alt={item.descricao || 'Mídia'} fill className="object-cover" />
+            ) : (
+                <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                    <Video className="w-10 h-10 text-muted-foreground" />
+                </div>
+            )}
+            <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white">
+                {item.tipo === 'photo' ? <Camera className="h-3 w-3"/> : <Video className="h-3 w-3"/>}
+            </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 text-xs">
+          <p className="font-semibold truncate">{item.descricao || "Sem descrição"}</p>
+          <p className="text-muted-foreground">{item.models?.nome || "Modelo não vinculado"}</p>
+      </CardContent>
+      <CardFooter className="p-3 pt-0">
+          <AlertDialog>
+              <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 className="mr-2 h-3.5 w-3.5"/> Excluir
+                  </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>Deseja realmente deletar esta mídia? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(item)}>Sim, excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+      </CardFooter>
+    </Card>
+  );
+}
+

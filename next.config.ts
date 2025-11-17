@@ -9,8 +9,14 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true,
     remotePatterns: [
+      {
+        protocol: 'https',
+        // ATENÇÃO: Substitua 'ID-DO-PROJETO' pelo ID do seu projeto Supabase.
+        hostname: 'mfkjvtarvjjmbwdoviss.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
       {
         protocol: 'https',
         hostname: 'placehold.co',
