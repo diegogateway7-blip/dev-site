@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md bg-[var(--surface-card)]/95 border-white/10 shadow-soft">
+      <Card className="w-full max-w-md bg-[color:var(--surface-card)] border-white/10 shadow-soft backdrop-blur-3xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Admin Panel</CardTitle>
           <CardDescription>Faça login para gerenciar a plataforma.</CardDescription>

@@ -37,15 +37,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // eslint-disable-next-line
   }, []);
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="relative min-h-screen bg-[hsl(var(--background))] text-foreground">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(216,93,178,0.18),transparent_35%)]"
+      />
+      <div className="relative z-10 flex min-h-screen">
         {/* Suspense é necessário porque ProgressBar usa hooks de navegação */}
         <Suspense fallback={null}>
-            <ProgressBar />
+          <ProgressBar />
         </Suspense>
         <AdminSidebar onLogout={() => handleLogout(true)} />
-        <div className="flex-1 ml-60"> {/* Ajustado o margin-left para corresponder à nova largura do sidebar */}
-            <main className="container mx-auto py-8 px-6">{children}</main>
+        <div className="flex-1 ml-60">
+          <main className="mx-auto max-w-6xl px-8 py-10">{children}</main>
         </div>
+      </div>
     </div>
   );
 }

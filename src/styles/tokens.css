@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+
+  --background: 257 32% 6%;
+  --foreground: 0 0% 98%;
+
+  --card: 258 32% 12%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 258 32% 10%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+
+  --secondary: 256 25% 18%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 256 22% 20%;
+  --muted-foreground: 255 12% 70%;
+
+  --accent: 318 68% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 65% 38%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 258 32% 20%;
+  --input: 258 32% 20%;
+  --ring: 318 68% 60%;
+
+  --radius: 0.75rem;
+
+  --surface-card: hsla(256, 45%, 12%, 0.9);
+  --surface-card-dark: hsla(257, 55%, 8%, 0.95);
+  --dark-900: #05030b;
+
+  --purple-600: #7b5bff;
+  --purple-500: #a18bff;
+  --magenta: #d85db2;
+  --amber: #f7a83a;
+
+  --cta-green: #73f3c4;
+  --cta-green-700: #20c997;
+
+  --lilac-200: #efe4ff;
+  --lilac-100: #f6efff;
+  --text-900: 257 32% 10%;
+
+  --gradient-main:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(216, 93, 178, 0.2), transparent 35%);
+  --gradient-card: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.16), transparent 60%);
+  --gradient-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+
+  --shadow-soft: 0 30px 80px rgba(4, 3, 14, 0.6);
+  --shadow-glow: 0 0 30px rgba(155, 118, 255, 0.35), 0 0 60px rgba(216, 93, 178, 0.25);
+  --shadow-glass: 0 25px 80px rgba(5, 4, 15, 0.65);
+
+  --chart-1: 316 85% 72%;
+  --chart-2: 266 70% 72%;
+  --chart-3: 199 88% 68%;
+  --chart-4: 45 100% 70%;
+  --chart-5: 161 94% 45%;
+
+  --skeleton-base: rgba(255, 255, 255, 0.08);
+  --skeleton-highlight: rgba(255, 255, 255, 0.18);
+
+  --sidebar-background: 257 38% 9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 316 85% 72%;
+  --sidebar-primary-foreground: 240 5.9% 10%;
+  --sidebar-accent: 266 70% 72%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 257 32% 18%;
+  --sidebar-ring: 45 98% 70%;
+}
+
+.dark {
+  color-scheme: dark;
+}
+

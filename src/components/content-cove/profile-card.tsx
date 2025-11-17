@@ -33,7 +33,7 @@ export function ProfileCard() {
   const { coverImage, profileAvatar } = placeholderImages.profile;
 
   return (
-    <section className="relative mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-[var(--surface-card)] shadow-soft">
+    <section className="relative mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-[color:var(--surface-card)] shadow-soft">
       <div className="relative h-64 w-full overflow-hidden md:h-80">
         <Image
           src={coverImage.url}

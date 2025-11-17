@@ -34,7 +34,7 @@ export default function AdminSidebar({ onLogout }: { onLogout?: () => void }) {
   };
 
   return (
-    <aside className="h-screen bg-[var(--surface-card)]/95 text-white flex flex-col w-60 p-4 fixed inset-y-0 left-0 z-40 border-r border-white/10 shadow-soft backdrop-blur-3xl">
+    <aside className="h-screen bg-[color:var(--surface-card)] text-white flex flex-col w-60 p-4 fixed inset-y-0 left-0 z-40 border-r border-white/10 shadow-soft backdrop-blur-3xl">
       <div className="mb-8 px-2">
         <span className="text-2xl font-bold font-headline">Admin Panel</span>
       </div>

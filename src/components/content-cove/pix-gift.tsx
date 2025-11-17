@@ -39,7 +39,7 @@ export function PixGiftDialog() {
           Mandar mimo
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg border border-white/15 bg-[var(--surface-card)]/95 text-[hsl(var(--text-900))] shadow-soft backdrop-blur-3xl">
+      <DialogContent className="max-w-lg border border-white/15 bg-[color:var(--surface-card)] text-[hsl(var(--text-900))] shadow-soft backdrop-blur-3xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-[hsl(var(--text-900))]">Mandar mimo</DialogTitle>
         </DialogHeader>

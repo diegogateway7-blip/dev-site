@@ -147,7 +147,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
   }
 
   return (
-    <Card className="max-w-xl mx-auto mt-6 border border-white/10 bg-[var(--surface-card)]/95 shadow-soft backdrop-blur-3xl">
+    <Card className="max-w-xl mx-auto mt-6 border border-white/10 bg-[color:var(--surface-card)] shadow-soft backdrop-blur-3xl">
       <CardHeader>
         <CardTitle>{isEditMode ? "Editar Modelo" : "Nova Modelo"}</CardTitle>
       </CardHeader>

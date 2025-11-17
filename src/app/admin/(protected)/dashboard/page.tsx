@@ -1,226 +1,163 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
+import type { ElementType } from "react";
 import {
   Users,
   ImageIcon,
   PlusCircle,
   BookOpen,
+  TrendingUp,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+
+import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+  ActivityListCard,
+  ChartCard,
+  DashboardSkeleton,
+  MediaRow,
+  ModelRow,
+  QuickActionCard,
+  ScheduledMediaCard,
+  StatCard,
+} from "@/components/admin/dashboard/cards";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-type Model = { id: number; nome: string; avatar_url: string | null };
-type Media = { id: number; url: string; tipo: 'photo' | 'video'; descricao: string; modelo_id: number; models?: { nome: string } };
-type UploadsByDay = { date: string; count: number };
-
+type Insight = {
+  title: string;
+  description: string;
+  variant: "positive" | "alert" | "neutral";
+  icon: ElementType;
+};
 
 export default function AdminDashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [modelsCount, setModelsCount] = useState<number>(0);
-  const [mediaCount, setMediaCount] = useState<number>(0);
-  const [recentModels, setRecentModels] = useState<Model[]>([]);
-  const [recentMedia, setRecentMedia] = useState<Media[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [uploadsData, setUploadsData] = useState<UploadsByDay[]>([]);
+  const {
+    modelsCount,
+    mediaCount,
+    recentModels,
+    recentMedia,
+    uploadsData,
+    uploadsTrend,
+    scheduledMedia,
+    loading,
+    error,
+  } = useDashboardMetrics();
 
-  useEffect(() => {
-    async function fetchSummary() {
-      setLoading(true);
-      setError(null);
-      const supabase = createClient();
-      try {
-        const modelsPromise = supabase.from("models").select("*", { count: "exact" }).order("id", { ascending: false }).limit(5);
-        const mediaPromise = supabase.from("media").select("*, models(nome)", { count: "exact" }).order("created_at", { ascending: false }).limit(5);
-        
-        const [
-          { data: modelsData, count: modelsCountData, error: modelsError },
-          { data: mediaData, count: mediaCountData, error: mediaError }
-        ] = await Promise.all([modelsPromise, mediaPromise]);
+  const totalUploads = uploadsData.reduce((acc, day) => acc + day.count, 0);
+  const averageUploads = uploadsData.length ? (totalUploads / uploadsData.length).toFixed(1) : "0";
+  const backlog = scheduledMedia.length;
+  const needsContent = backlog < 3;
 
-        if (modelsError) throw modelsError;
-        if (mediaError) throw mediaError;
-
-        setModelsCount(modelsCountData ?? 0);
-        setMediaCount(mediaCountData ?? 0);
-        setRecentModels(modelsData || []);
-        setRecentMedia(mediaData || []);
-
-        // Nova consulta para o gráfico
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: chartData, error: chartError } = await supabase
-            .from('media')
-            .select('created_at')
-            .gte('created_at', sevenDaysAgo);
-        
-        if (chartError) throw chartError;
-
-        // Processa os dados para o gráfico
-        const uploadsByDay = chartData.reduce((acc, item) => {
-            const date = new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-        const formattedChartData = Object.entries(uploadsByDay).map(([date, count]) => ({ date, count }));
-        setUploadsData(formattedChartData);
-
-      } catch (e: any) {
-        setError("Erro ao buscar dados do dashboard: " + (e?.message || ""));
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSummary();
-  }, []);
+  const insights: Insight[] = [
+    {
+      title: "Fluxo de uploads",
+      description: `${totalUploads} envios nos últimos 7 dias (${averageUploads}/dia).`,
+      variant: "positive",
+      icon: TrendingUp,
+    },
+    {
+      title: "Agenda",
+      description:
+        backlog === 0
+          ? "Nenhuma mídia agendada. Programe novas peças para manter a cadência."
+          : `${backlog} mídias prontas para publicação.`,
+      variant: needsContent ? "alert" : "neutral",
+      icon: needsContent ? AlertTriangle : Sparkles,
+    },
+    {
+      title: "Base de modelos",
+      description:
+        modelsCount === 0
+          ? "Cadastre seu primeiro modelo para as campanhas."
+          : `${modelsCount} modelos ativos cadastrados.`,
+      variant: "neutral",
+      icon: Users,
+    },
+  ];
 
   return (
     <div className="container mx-auto py-10">
-      <h2 className="text-3xl font-bold tracking-tight mb-6">Dashboard</h2>
-      {error && <div className="text-red-500 bg-red-500/10 p-4 rounded-md mb-6">{error}</div>}
-      
-      {loading ? <DashboardSkeleton /> : (
-        <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard icon={Users} title="Total de Modelos" value={modelsCount} />
-                <StatCard icon={ImageIcon} title="Total de Mídias" value={mediaCount} />
-                <QuickActionCard icon={PlusCircle} title="Adicionar Modelo" href="/admin/models/new" />
-                <QuickActionCard icon={BookOpen} title="Ver Tutorial" href="/admin/tutorial" />
-            </div>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">Monitore performance, próximos lançamentos e ative ações rápidas.</p>
+      </div>
 
-            <div className="grid gap-6 mt-8 grid-cols-1 lg:grid-cols-3">
-                <ChartCard data={uploadsData} />
-                <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
-                    <RecentActivityCard title="Últimos Modelos" items={recentModels} renderItem={(item: Model) => <ModelItem item={item} />} />
-                    <RecentActivityCard title="Últimas Mídias" items={recentMedia} renderItem={(item: Media) => <MediaItem item={item} />} />
-                </div>
+      {error && <div className="mb-6 rounded-md border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>}
+
+      {loading ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={Users} title="Total de Modelos" value={modelsCount} caption="Base ativa" />
+            <StatCard icon={ImageIcon} title="Total de Mídias" value={mediaCount} caption="Portfolio publicado" />
+            <QuickActionCard icon={PlusCircle} title="Adicionar Modelo" description="Cadastre um novo perfil" href="/admin/models/new" />
+            <QuickActionCard icon={BookOpen} title="Ver Tutorial" description="Guia completo da operação" href="/admin/tutorial" />
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <ChartCard data={uploadsData} trend={uploadsTrend} />
+            <div className="grid gap-6 lg:col-span-2 md:grid-cols-2">
+              <ActivityListCard
+                title="Últimos Modelos"
+                items={recentModels}
+                emptyMessage="Nenhuma modelo cadastrada recentemente."
+                renderItem={model => <ModelRow key={model.id} model={model} />}
+              />
+              <ActivityListCard
+                title="Últimas Mídias"
+                items={recentMedia}
+                emptyMessage="Nenhum upload recente."
+                renderItem={media => <MediaRow key={media.id} media={media} />}
+              />
             </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <ScheduledMediaCard items={scheduledMedia} />
+            <InsightsCard insights={insights} />
+          </div>
         </>
       )}
     </div>
   );
 }
 
-// Subcomponentes para organização
-const StatCard = ({ icon: Icon, title, value }: { icon: React.ElementType, title: string, value: number }) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <Icon className="h-4 w-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-    </CardContent>
-  </Card>
-);
-
-const QuickActionCard = ({ icon: Icon, title, href }: { icon: React.ElementType, title: string, href: string }) => (
-    <Card className="hover:bg-muted/50 transition-colors">
-        <Link href={href} className="block h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold text-muted-foreground">Acessar</div>
-            </CardContent>
-        </Link>
-    </Card>
-);
-
-const RecentActivityCard = ({ title, items, renderItem }: { title: string, items: any[], renderItem: (item: any) => React.ReactNode }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      {items.length > 0 ? items.map(renderItem) : <p className="text-sm text-muted-foreground">Nenhuma atividade recente.</p>}
-    </CardContent>
-  </Card>
-);
-
-const ModelItem = ({ item }: { item: Model }) => (
-  <div key={item.id} className="flex items-center gap-4">
-    <Image src={item.avatar_url || '/placeholder-avatar.png'} alt="avatar" width={40} height={40} className="rounded-full object-cover" />
-    <div className="flex-1">
-      <p className="text-sm font-medium leading-none">{item.nome}</p>
-    </div>
-    <Button variant="outline" size="sm" asChild>
-      <Link href={`/admin/models/${item.id}`}>Ver</Link>
-    </Button>
-  </div>
-);
-
-const MediaItem = ({ item }: { item: Media }) => (
-  <div key={item.id} className="flex items-center gap-4">
-    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-        {item.tipo === 'photo' ? (
-            <Image src={item.url} alt="mídia" width={40} height={40} className="object-cover w-full h-full" />
-        ) : (
-            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-muted-foreground" />
+function InsightsCard({ insights }: { insights: Insight[] }) {
+  return (
+    <Card className="border-white/10 bg-[color:var(--surface-card)]/80 shadow-soft">
+      <CardHeader>
+        <CardTitle>Insights e próximos passos</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {insights.map((insight, index) => (
+          <div key={index} className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-full bg-white/10 p-2">
+              <insight.icon className="h-5 w-5 text-white" />
             </div>
-        )}
-    </div>
-    <div className="flex-1 truncate">
-      <p className="text-sm font-medium leading-none truncate">{item.descricao || "Mídia sem descrição"}</p>
-      <p className="text-xs text-muted-foreground">{item.models?.nome}</p>
-    </div>
-    <Button variant="outline" size="sm" asChild>
-      <Link href={`/admin/models/${item.modelo_id}/media`}>Ver</Link>
-    </Button>
-  </div>
-);
-
-const ChartCard = ({ data }: { data: UploadsByDay[] }) => (
-    <Card className="lg:col-span-1">
-        <CardHeader>
-            <CardTitle>Uploads nos Últimos 7 Dias</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))'}} />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
-        </CardContent>
-    </Card>
-)
-
-const DashboardSkeleton = () => (
-    <>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-        </div>
-        <div className="grid gap-6 mt-8 grid-cols-1 lg:grid-cols-3">
-            <Skeleton className="h-80 lg:col-span-1" />
-            <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
-                <Skeleton className="h-80" />
-                <Skeleton className="h-80" />
+            <div className="flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <p className="font-medium text-white">{insight.title}</p>
+                <Badge
+                  variant="secondary"
+                  className={
+                    insight.variant === "alert"
+                      ? "bg-red-400/20 text-red-200"
+                      : insight.variant === "positive"
+                        ? "bg-emerald-400/20 text-emerald-200"
+                        : "bg-white/10 text-white"
+                  }
+                >
+                  {insight.variant === "alert" ? "Atenção" : insight.variant === "positive" ? "OK" : "Info"}
+                </Badge>
+              </div>
+              <p className="text-sm text-white/70">{insight.description}</p>
             </div>
-        </div>
-    </>
-)
-
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}

@@ -22,6 +22,7 @@ export type Media = {
   url: string;
   tipo: 'photo' | 'video';
   descricao: string | null;
+  publicar_em?: string | null;
   models?: { // Relação opcional que pode vir do Supabase
     nome: string;
   };

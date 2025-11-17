@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { Media } from "@/types"; // Usando o tipo centralizado
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Media, Model } from "@/types"; // Usando o tipo centralizado
 
 // Imports de UI
 import { Input } from "@/components/ui/input";
@@ -12,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Trash2, Video, Camera } from "lucide-react";
+import { Search, Trash2, Video, Camera, ImageIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Badge } from "@/components/ui/badge";
 
 export default function MediaLibraryPage() {
   const { toast } = useToast();
@@ -21,10 +24,12 @@ export default function MediaLibraryPage() {
   const [mediaItems, setMediaItems] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [models, setModels] = useState<Model[]>([]);
 
   useEffect(() => {
     // Carrega as mídias mais recentes ao iniciar a página
     fetchMedia();
+    loadModels();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -49,6 +54,17 @@ export default function MediaLibraryPage() {
     }
   }
   
+  async function loadModels() {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("models").select("id, nome").order("nome", { ascending: true });
+      if (error) throw error;
+      setModels(data || []);
+    } catch (e: any) {
+      toast({ title: "Não foi possível carregar modelos", description: e?.message, variant: "destructive" });
+    }
+  }
+
   const handleDelete = async (mediaItem: Media) => {
     try {
         const supabase = createClient();
@@ -86,18 +102,59 @@ export default function MediaLibraryPage() {
         </div>
       </div>
       
-      <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 border border-dashed rounded-lg">
-          <Input placeholder="Buscar por descrição..." value={filters.description} onChange={e => handleFilterChange('description', e.target.value)} />
-          <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
-              <SelectTrigger><SelectValue placeholder="Filtrar por tipo" /></SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="">Todos os Tipos</SelectItem>
-                  <SelectItem value="photo">Foto</SelectItem>
-                  <SelectItem value="video">Vídeo</SelectItem>
-              </SelectContent>
-          </Select>
-          <Input placeholder="ID do Modelo (opcional)" value={filters.modelId} onChange={e => handleFilterChange('modelId', e.target.value)} />
-          <Button type="submit" disabled={loading} className="w-full"><Search className="mr-2 h-4 w-4" />{loading ? 'Buscando...' : 'Buscar'}</Button>
+      <form
+        onSubmit={handleSearch}
+        className="grid grid-cols-1 gap-4 mb-8 rounded-2xl border border-white/10 bg-[color:var(--surface-card)]/70 p-4 shadow-soft sm:grid-cols-2 lg:grid-cols-5"
+      >
+        <Input
+          placeholder="Buscar por descrição..."
+          value={filters.description}
+          onChange={e => handleFilterChange('description', e.target.value)}
+          className="bg-black/20"
+        />
+        <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+          <SelectTrigger className="bg-black/20">
+            <SelectValue placeholder="Filtrar por tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todos os tipos</SelectItem>
+            <SelectItem value="photo">Foto</SelectItem>
+            <SelectItem value="video">Vídeo</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.modelId}
+          onValueChange={value => handleFilterChange('modelId', value)}
+        >
+          <SelectTrigger className="bg-black/20">
+            <SelectValue placeholder="Filtrar por modelo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todos os modelos</SelectItem>
+            {models.map(model => (
+              <SelectItem key={model.id} value={String(model.id)}>
+                {model.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="sm:col-span-2 lg:col-span-1 flex gap-2">
+          <Button type="submit" disabled={loading} className="w-full">
+            <Search className="mr-2 h-4 w-4" />
+            {loading ? 'Buscando...' : 'Buscar'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-white/20 text-white/80"
+            onClick={() => {
+              setFilters({ description: "", type: "", modelId: "" });
+              fetchMedia({ description: "", type: "", modelId: "" });
+            }}
+          >
+            Limpar
+          </Button>
+        </div>
       </form>
 
       {error && <div className="text-red-500 bg-red-500/10 p-4 rounded-md mb-6">{error}</div>}
@@ -109,7 +166,7 @@ export default function MediaLibraryPage() {
       ) : mediaItems.length === 0 ? (
         <EmptyState icon={ImageIcon} title="Nenhuma mídia encontrada" description="Nenhuma mídia corresponde aos filtros aplicados ou nenhuma foi enviada ainda." actionHref="/admin/models" actionLabel="Gerenciar Modelos"/>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
           {mediaItems.map(item => <MediaCard key={item.id} item={item} onDelete={handleDelete} />)}
         </div>
       )}
@@ -119,44 +176,68 @@ export default function MediaLibraryPage() {
 
 // Componente para o Card de Mídia
 function MediaCard({ item, onDelete }: { item: Media; onDelete: (item: Media) => void }) {
+  const [hasImageError, setHasImageError] = useState(false);
+
   return (
-    <Card className="overflow-hidden group">
-      <CardHeader className="p-0 relative">
-        <div className="aspect-square w-full relative">
-            {item.tipo === 'photo' ? (
-                <Image src={item.url} alt={item.descricao || 'Mídia'} fill className="object-cover" />
-            ) : (
-                <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                    <Video className="w-10 h-10 text-muted-foreground" />
-                </div>
-            )}
-            <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white">
-                {item.tipo === 'photo' ? <Camera className="h-3 w-3"/> : <Video className="h-3 w-3"/>}
+    <Card className="group overflow-hidden border-white/10 bg-[color:var(--surface-card)]/80 shadow-soft">
+      <CardHeader className="relative p-0">
+        <div className="relative aspect-square w-full overflow-hidden">
+          {item.tipo === 'photo' && !hasImageError ? (
+            <Image
+              src={item.url}
+              alt={item.descricao || 'Mídia'}
+              fill
+              sizes="(max-width: 768px) 50vw, 240px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              unoptimized
+              onError={() => setHasImageError(true)}
+            />
+          ) : item.tipo === 'video' ? (
+            <div className="flex h-full w-full items-center justify-center bg-black/40">
+              <Video className="h-10 w-10 text-white/70" />
             </div>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-black/30">
+              <ImageIcon className="h-8 w-8 text-white/60" />
+            </div>
+          )}
+          <div className="absolute top-3 left-3">
+            <Badge variant="secondary" className="bg-black/60 text-white backdrop-blur">
+              {item.tipo === 'photo' ? 'Foto' : 'Vídeo'}
+            </Badge>
+          </div>
+          <div className="absolute top-3 right-3 rounded-full bg-black/60 p-2 text-white">
+            {item.tipo === 'photo' ? <Camera className="h-4 w-4" /> : <Video className="h-4 w-4" />}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-3 text-xs">
-          <p className="font-semibold truncate">{item.descricao || "Sem descrição"}</p>
-          <p className="text-muted-foreground">{item.models?.nome || "Modelo não vinculado"}</p>
+        <p className="font-semibold truncate text-sm">{item.descricao || "Sem descrição"}</p>
+        <p className="text-muted-foreground">{item.models?.nome || "Modelo não vinculado"}</p>
+        <p className="text-[11px] text-white/50">
+          {item.created_at
+            ? formatDistanceToNow(new Date(item.created_at), { locale: ptBR, addSuffix: true })
+            : "Sem data"}
+        </p>
       </CardContent>
       <CardFooter className="p-3 pt-0">
-          <AlertDialog>
-              <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="w-full opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 className="mr-2 h-3.5 w-3.5"/> Excluir
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                      <AlertDialogDescription>Deseja realmente deletar esta mídia? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDelete(item)}>Sim, excluir</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-          </AlertDialog>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm" className="w-full opacity-0 transition-opacity group-hover:opacity-100">
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>Deseja realmente deletar esta mídia? Esta ação não pode ser desfeita.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDelete(item)}>Sim, excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
