@@ -1,50 +1,100 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { createClient } from "@/lib/supabaseClient";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { toast } from "@/hooks/use-toast";
+
+const formSchema = z.object({
+  email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
+  password: z.string().min(1, { message: "A senha é obrigatória." }),
+});
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    setError(null);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError("Usuário ou senha inválidos");
-        setLoading(false);
-        return;
-      }
-      localStorage.setItem("admin-auth", "1");
-      router.push("/admin");
-    } catch (e) {
-      setError("Erro ao tentar logar");
-    } finally {
-      setLoading(false);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Usuário ou senha inválidos. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Login bem-sucedido!" });
+      router.push("/admin/dashboard"); // Redireciona para o dashboard
+      router.refresh();
     }
   }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow max-w-md w-full">
-        <h2 className="text-2xl font-semibold mb-4">Login de Administrador</h2>
-        <div className="mb-3">
-          <label className="block mb-1 font-medium">Email</label>
-          <input type="email" className="w-full border p-2 rounded" value={email} onChange={e => setEmail(e.target.value)} required/>
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">Senha</label>
-          <input type="password" className="w-full border p-2 rounded" value={password} onChange={e => setPassword(e.target.value)} required/>
-        </div>
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-70" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
-        {error && <div className="mt-2 text-red-600 text-sm text-center">{error}</div>}
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md bg-[var(--surface-card)]/95 border-white/10 shadow-soft">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-headline">Admin Panel</CardTitle>
+          <CardDescription>Faça login para gerenciar a plataforma.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="seu@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={loading} variant="cta">
+                {loading ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
