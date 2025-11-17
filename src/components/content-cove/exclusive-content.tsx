@@ -20,21 +20,11 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from '@/components/ui/carousel';
-import placeholderImages from '@/lib/placeholder-images.json';
+import { Media } from '@/types'; // Importa o tipo Media
 import { MediaGrid, MediaGridSkeleton, Thumb, type MediaItem } from './media-grid';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input'; // Importa o Input
 import { Search } from 'lucide-react';
-
-// Corrigindo a tipagem dos dados importados
-const typedMediaItems = placeholderImages.mediaItems.map(item => ({
-  ...item,
-  type: item.type as 'photo' | 'video',
-})) as MediaItem[];
-
-const photos = typedMediaItems.filter(item => item.type === 'photo');
-const videos = typedMediaItems.filter(item => item.type === 'video');
-
 
 const tabs = [
   { value: 'packs', label: 'Todos', icon: Crown },
@@ -42,9 +32,15 @@ const tabs = [
   { value: 'videos', label: 'Vídeos', icon: Video },
 ];
 
-export function ExclusiveContent() {
+// O componente agora aceita a prop com os dados iniciais
+export function ExclusiveContent({ initialMediaItems }: { initialMediaItems: Media[] }) {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
-  const [activeTabItems, setActiveTabItems] = useState<MediaItem[]>(typedMediaItems); // Usando os dados com tipo corrigido
+  
+  // Filtra as mídias recebidas
+  const photos = initialMediaItems.filter(item => item.tipo === 'photo');
+  const videos = initialMediaItems.filter(item => item.tipo === 'video');
+
+  const [activeTabItems, setActiveTabItems] = useState<Media[]>(initialMediaItems); // Usando os dados com tipo corrigido
   const [mainApi, setMainApi] = useState<CarouselApi>();
   const [thumbApi, setThumbApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -133,13 +129,13 @@ export function ExclusiveContent() {
         setActiveTabItems(videos);
         break;
       default:
-        setActiveTabItems(typedMediaItems);
+        setActiveTabItems(initialMediaItems); // Usa os dados iniciais
     }
   };
   
   // Filtra os itens com base na busca
   const filteredItems = activeTabItems.filter(item => 
-    item.hint?.toLowerCase().includes(searchQuery.toLowerCase())
+    item.descricao?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   return (
@@ -212,7 +208,7 @@ export function ExclusiveContent() {
               <CarouselContent>
                 {activeTabItems.map((item, index) => (
                   <CarouselItem key={item.id} className="flex items-center justify-center">
-                    {item.type === 'photo' ? (
+                    {item.tipo === 'photo' ? (
                       <div className="relative w-full h-full max-h-[calc(92vh-120px)]">
                         <Image
                           src={item.url}
