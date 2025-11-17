@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 // ATENÇÃO: Substitua 'https://SEU_SITE.com' pela URL real do seu site em produção.
 const siteUrl = 'https://packlarissa-desenvolvimento.vercel.app';
 const siteTitle = 'Larissa - Conteúdo Exclusivo';
-const siteDescription = 'O único lugar para encontrar meu conteúdo exclusivo. Assine e tenha acesso a fotos e vídeos que não publico em nenhum outro lugar.';
+const siteDescription = 'O único lugar para encontrar meu conteúdo exclusivo. Assine e tenha acesso a fotos
 
 export const metadata: Metadata = {
   title: siteTitle,
@@ -54,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <body className={cn(
         "min-h-screen bg-background text-foreground",
         fontBody.variable,
