@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Trash2, Video, Camera, ImageIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter as DialogFooterBase, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Trash2, Video, Camera, ImageIcon, Copy, ExternalLink } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 
@@ -177,6 +178,17 @@ export default function MediaLibraryPage() {
 // Componente para o Card de Mídia
 function MediaCard({ item, onDelete }: { item: Media; onDelete: (item: Media) => void }) {
   const [hasImageError, setHasImageError] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { toast } = useToast();
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(item.url);
+      toast({ title: "URL copiada!", description: "Cole onde precisar publicar." });
+    } catch (e: any) {
+      toast({ title: "Não foi possível copiar", description: e?.message || "", variant: "destructive" });
+    }
+  }
 
   return (
     <Card className="group overflow-hidden border-white/10 bg-[color:var(--surface-card)]/80 shadow-soft">
@@ -220,7 +232,57 @@ function MediaCard({ item, onDelete }: { item: Media; onDelete: (item: Media) =>
             : "Sem data"}
         </p>
       </CardContent>
-      <CardFooter className="p-3 pt-0">
+      <CardFooter className="flex gap-2 p-3 pt-0">
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogTrigger asChild>
+            <Button variant="secondary" size="sm" className="w-full border border-white/10 bg-white/10 text-white hover:bg-white/20">
+              Preview
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl border-white/10 bg-[color:var(--surface-card)]/95 text-white">
+            <DialogHeader>
+              <DialogTitle>Preview da mídia #{item.id}</DialogTitle>
+              <DialogDescription className="text-white/70">
+                {item.descricao || "Sem descrição"} · {item.models?.nome || "Modelo não vinculado"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="relative w-full overflow-hidden rounded-2xl border border-white/10">
+              {item.tipo === "photo" && !hasImageError ? (
+                <Image
+                  src={item.url}
+                  alt={item.descricao || "Preview"}
+                  width={1200}
+                  height={1200}
+                  className="h-full w-full object-contain bg-black/30"
+                  unoptimized
+                  onError={() => setHasImageError(true)}
+                />
+              ) : item.tipo === "video" ? (
+                <video src={item.url} controls className="w-full rounded-2xl bg-black/50" />
+              ) : (
+                <div className="flex h-64 items-center justify-center bg-black/30">
+                  <ImageIcon className="h-10 w-10 text-white/60" />
+                </div>
+              )}
+            </div>
+            <DialogFooterBase className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1 text-sm text-white/70">
+                <p>URL: <span className="break-all text-white">{item.url}</span></p>
+                <p>ID interno: {item.id}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button type="button" variant="outline" onClick={handleCopy} className="border-white/30 text-white">
+                  <Copy className="mr-2 h-4 w-4" /> Copiar URL
+                </Button>
+                <Button type="button" variant="ghost" className="border border-white/20 text-white hover:bg-white/10" asChild>
+                  <a href={item.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" /> Abrir original
+                  </a>
+                </Button>
+              </div>
+            </DialogFooterBase>
+          </DialogContent>
+        </Dialog>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" size="sm" className="w-full opacity-0 transition-opacity group-hover:opacity-100">
