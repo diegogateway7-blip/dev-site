@@ -6,7 +6,9 @@ import { cn } from '@/lib/utils';
 // ATENÇÃO: Substitua 'https://SEU_SITE.com' pela URL real do seu site em produção.
 const siteUrl = 'https://packlarissa-desenvolvimento.vercel.app';
 const siteTitle = 'Larissa - Conteúdo Exclusivo';
-const siteDescription = 'O único lugar para encontrar meu conteúdo exclusivo. Assine e tenha acesso a fotos
+// CORREÇÃO: Usando crases (template literals) para permitir múltiplas linhas
+const siteDescription = `O único lugar para encontrar meu conteúdo exclusivo. Assine e tenha acesso a fotos
+e vídeos que não publico em nenhum outro lugar.`;
 
 export const metadata: Metadata = {
   title: siteTitle,

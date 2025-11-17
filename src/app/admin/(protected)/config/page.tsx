@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { setSupabaseCredentials, clearSupabaseCredentialsOverrides } from "@/lib/supabaseClient";
+import { setSupabaseCredentials, clearSupabaseCredentialsOverrides } from "@/lib/supabase/client";
 
 export default function AdminConfigPage() {
   const [url, setUrl] = useState("");

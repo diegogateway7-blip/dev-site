@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, MoreHorizontal, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { createClient } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { Model } from "@/types"; // Importa o tipo centralizado
 
 import {

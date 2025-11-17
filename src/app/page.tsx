@@ -5,7 +5,7 @@ import { ProfileHeader } from '@/components/content-cove/profile-header';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { MediaGridSkeleton } from '@/components/content-cove/media-grid';
-import { createServer } from '@/lib/supabaseClient'; // Importa o cliente para servidor
+import { createServer } from '@/lib/supabase/server'; // Importa o cliente para servidor
 import { Media } from '@/types'; // Importa o tipo Media
 
 export default async function Home() {
