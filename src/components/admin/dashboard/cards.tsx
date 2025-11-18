@@ -133,7 +133,7 @@ export function MediaRow({ media }: { media: Media & { models?: { nome: string }
       </div>
       <div className="flex-1 truncate">
         <p className="font-medium leading-none text-white">{media.descricao || "Mídia sem descrição"}</p>
-        <p className="text-sm text-white/60">{media.models?.nome}</p>
+        <p className="text-sm text-white/60">{media.models?.nome || 'Modelo não vinculado'}</p>
       </div>
       <Button variant="outline" size="sm" asChild className="border-white/20 text-white hover:bg-white/10">
         <Link href={`/admin/models/${media.modelo_id}/media`}>Ver</Link>

@@ -1,0 +1,127 @@
+import "server-only";
+import { createServer } from "@/lib/supabase/server";
+import type { Media, Model } from "@/types";
+
+export type UploadsByDay = { date: string; count: number };
+
+export type ScheduledMedia = Pick<Media, "id" | "descricao" | "modelo_id"> & {
+  publicar_em?: string | null;
+  models?: { nome: string } | null;
+};
+
+export type DashboardMetrics = {
+  modelsCount: number;
+  mediaCount: number;
+  recentModels: Model[];
+  recentMedia: (Media & { models?: { nome: string } })[];
+  uploadsData: UploadsByDay[];
+  uploadsTrend: number;
+  scheduledMedia: ScheduledMedia[];
+};
+
+function isMissingColumnError(error: any, column: string) {
+  if (!error) return false;
+  const code = (error as any)?.code;
+  if (code && String(code) === "42703") return true;
+  const message = (error as any)?.message?.toLowerCase?.();
+  return !!(message && message.includes("does not exist") && message.includes(column.toLowerCase()));
+}
+
+export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+  const supabase = createServer();
+
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const nowIso = new Date().toISOString();
+
+    const modelsPromise = supabase
+      .from("models")
+      .select("*", { count: "exact" })
+      .order("id", { ascending: false })
+      .limit(5);
+
+    const mediaPromise = supabase
+      .from("media")
+      .select("*, models:models(nome)", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    const uploadsPromise = supabase
+      .from("media")
+      .select("created_at")
+      .gte("created_at", sevenDaysAgo);
+
+    const scheduledPromise = supabase
+      .from("media")
+      .select("id, descricao, publicar_em, modelo_id, models!inner(nome)")
+      .gte("publicar_em", nowIso)
+      .order("publicar_em", { ascending: true })
+      .limit(5);
+
+    const [modelsRes, mediaRes, uploadsRes, scheduledRes] = await Promise.allSettled([
+      modelsPromise,
+      mediaPromise,
+      uploadsPromise,
+      scheduledPromise,
+    ]);
+
+    // Processar os resultados
+    const modelsData = modelsRes.status === "fulfilled" ? modelsRes.value.data : [];
+    const modelsCount = modelsRes.status === "fulfilled" ? modelsRes.value.count ?? 0 : 0;
+    if (modelsRes.status === "rejected") console.error("Error fetching models:", modelsRes.reason);
+
+    const mediaData = mediaRes.status === "fulfilled" ? mediaRes.value.data : [];
+    const mediaCount = mediaRes.status === "fulfilled" ? mediaRes.value.count ?? 0 : 0;
+    if (mediaRes.status === "rejected") console.error("Error fetching media:", mediaRes.reason);
+
+    const uploadsRaw = uploadsRes.status === "fulfilled" ? (uploadsRes.value.data as { created_at: string }[]) : [];
+    if (uploadsRes.status === "rejected") console.error("Error fetching uploads:", uploadsRes.reason);
+    
+    const scheduledData = scheduledRes.status === "fulfilled" ? scheduledRes.value.data : [];
+    const columnMissing = scheduledRes.status === 'rejected' && isMissingColumnError(scheduledRes.reason, "publicar_em");
+    if (scheduledRes.status === "rejected" && !columnMissing) {
+      console.error("Error fetching scheduled media:", scheduledRes.reason);
+    }
+
+
+    const uploadsByDay = uploadsRaw.reduce<Record<string, number>>((acc: Record<string, number>, item: { created_at: string }) => {
+      const date = new Date(item.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+    const filledUploads = Array.from({ length: 7 }).map((_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      const label = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      return { date: label, count: uploadsByDay[label] ?? 0 };
+    });
+
+    const midPoint = Math.floor(filledUploads.length / 2);
+    const previousTotal = filledUploads.slice(0, midPoint).reduce((acc, day) => acc + day.count, 0);
+    const recentTotal = filledUploads.slice(midPoint).reduce((acc, day) => acc + day.count, 0);
+    const trend = previousTotal === 0 ? (recentTotal > 0 ? 100 : 0) : Number((((recentTotal - previousTotal) / previousTotal) * 100).toFixed(1));
+
+    return {
+      modelsCount,
+      mediaCount,
+      recentModels: (modelsData as Model[]) || [],
+      recentMedia: (mediaData as (Media & { models?: { nome: string } })[]) || [],
+      uploadsData: filledUploads,
+      uploadsTrend: trend,
+      scheduledMedia: columnMissing ? [] : (scheduledData as ScheduledMedia[]) || [],
+    };
+  } catch (error) {
+    console.error("Failed to fetch dashboard metrics:", error);
+    // Retorna um estado vazio ou padrão em caso de erro na busca geral
+    return {
+        modelsCount: 0,
+        mediaCount: 0,
+        recentModels: [],
+        recentMedia: [],
+        uploadsData: [],
+        uploadsTrend: 0,
+        scheduledMedia: [],
+    };
+  }
+}

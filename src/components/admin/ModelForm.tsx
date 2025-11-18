@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { saveModel } from "@/app/admin/(protected)/models/actions";
 
 // Define o esquema de validação com Zod
 const formSchema = z.object({
@@ -27,6 +28,8 @@ const formSchema = z.object({
   bio: z.string().min(10, { message: "A bio deve ter pelo menos 10 caracteres." }),
   slug: z.string().min(2, { message: "O slug deve ter pelo menos 2 caracteres." }).regex(/^[a-z0-9-]+$/, { message: "Use apenas letras minúsculas, números e hífens." }).optional(),
   redes: z.string().optional(),
+  avatar_url: z.string().url().optional().nullable(),
+  banner_url: z.string().url().optional().nullable(),
 });
 
 interface ModelFormProps {
@@ -38,13 +41,10 @@ export default function ModelForm({ modelId }: ModelFormProps) {
   const { toast } = useToast();
   const isEditMode = !!modelId;
 
-  // ESTADOS REINTRODUZIDOS para controle de UI
+  // ESTADOS para controle de UI
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  const [existingAvatarUrl, setExistingAvatarUrl] = useState<string | null>(null);
-  const [existingBannerUrl, setExistingBannerUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null); // Renomeado para não conflitar
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [slugEdited, setSlugEdited] = useState(false);
 
@@ -56,6 +56,8 @@ export default function ModelForm({ modelId }: ModelFormProps) {
       bio: "",
       slug: "",
       redes: "",
+      avatar_url: null,
+      banner_url: null,
     },
   });
 
@@ -67,27 +69,26 @@ export default function ModelForm({ modelId }: ModelFormProps) {
           const supabase = createClient();
           const { data, error } = await supabase.from("models").select("*").eq("id", modelId).single();
           if (error) throw error;
-          // Popula o formulário com os dados existentes
           form.reset({
             nome: data.nome ?? "",
             bio: data.bio ?? "",
             slug: data.slug ?? "",
             redes: data.redes ?? "",
+            avatar_url: data.avatar_url,
+            banner_url: data.banner_url,
           });
-          setExistingAvatarUrl(data.avatar_url);
-          setExistingBannerUrl(data.banner_url);
           setSlugEdited(!!data.slug);
         } catch (e: any) {
-          setFormError(e?.message || "Modelo não encontrado");
+          toast({ title: "Erro", description: "Modelo não encontrado", variant: "destructive" });
         } finally {
           setLoading(false);
         }
       }
       fetchModel();
     }
-  }, [modelId, form, isEditMode]);
-
-  // Função para upload de um arquivo
+  }, [modelId, form, isEditMode, toast]);
+  
+    // Função para upload de um arquivo
   async function uploadFile(file: File, name: string): Promise<string | null> {
     const supabase = createClient();
     const { data, error } = await supabase.storage.from("models").upload(`${name}_${Date.now()}_${file.name}`, file, { upsert: true });
@@ -95,41 +96,61 @@ export default function ModelForm({ modelId }: ModelFormProps) {
     return supabase.storage.from("models").getPublicUrl(data.path).data.publicUrl;
   }
 
-  // Nova função de submit, integrada com o React Hook Form
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  // Wrapper para a Server Action
+  async function handleFormSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    setFormError(null);
+    
+    let avatar_url = values.avatar_url;
+    let banner_url = values.banner_url;
 
     try {
-      const supabase = createClient();
-      let avatar_url = existingAvatarUrl;
-      let banner_url = existingBannerUrl;
-
-      if (avatarFile) {
-        avatar_url = await uploadFile(avatarFile, "avatar");
-      }
-      if (bannerFile) {
-        banner_url = await uploadFile(bannerFile, "banner");
-      }
-
-      const slugValue = values.slug && values.slug.length > 0 ? values.slug : slugify(values.nome);
-      const finalData = { ...values, slug: slugValue, avatar_url, banner_url };
-
-      const { error } = isEditMode
-        ? await supabase.from("models").update(finalData).eq("id", modelId)
-        : await supabase.from("models").insert([finalData]);
-
-      if (error) throw error;
-
-      toast({ title: `Modelo ${isEditMode ? 'atualizado' : 'criado'} com sucesso!` });
-      router.push("/admin/models");
-      router.refresh();
-
+        if (avatarFile) {
+            avatar_url = await uploadFile(avatarFile, "avatar");
+        }
+        if (bannerFile) {
+            banner_url = await uploadFile(bannerFile, "banner");
+        }
     } catch (e: any) {
-      setFormError(`Erro ao salvar: ${e?.message || ""}`);
-    } finally {
-      setLoading(false);
+        toast({ title: "Erro de Upload", description: e.message, variant: "destructive" });
+        setLoading(false);
+        return;
     }
+
+    const formData = new FormData();
+    // Adiciona os valores do formulário (exceto nulos ou indefinidos)
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+          formData.append(key, value as string);
+      }
+    });
+
+    // Garante que as URLs das imagens (novas ou existentes) sejam incluídas
+    if (avatar_url) {
+      formData.set("avatar_url", avatar_url);
+    }
+    if (banner_url) {
+      formData.set("banner_url", banner_url);
+    }
+
+    const result = await saveModel({ message: "", error: false, fields: {} }, formData, modelId);
+
+    if (result.error) {
+        toast({ title: "Erro ao Salvar", description: result.message, variant: "destructive" });
+        // Seta os erros dos campos no formulário
+        if(result.fields) {
+            for (const [field, errors] of Object.entries(result.fields)) {
+                form.setError(field as keyof z.infer<typeof formSchema>, {
+                    type: "manual",
+                    message: errors?.join(", "),
+                });
+            }
+        }
+    } else {
+        toast({ title: `Modelo ${isEditMode ? 'atualizado' : 'criado'} com sucesso!` });
+        router.push("/admin/models");
+        router.refresh();
+    }
+    setLoading(false);
   }
   
   // Função para deletar
@@ -166,9 +187,8 @@ export default function ModelForm({ modelId }: ModelFormProps) {
         <CardTitle>{isEditMode ? "Editar Modelo" : "Nova Modelo"}</CardTitle>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)}>
           <CardContent className="grid gap-6">
-            {formError && <div className="text-red-500 text-sm text-center p-3 bg-red-500/10 rounded-md">{formError}</div>}
             
             <FormField
               control={form.control}
@@ -233,13 +253,13 @@ export default function ModelForm({ modelId }: ModelFormProps) {
             <div className="grid gap-2">
               <Label htmlFor="avatar">Avatar</Label>
               <Input id="avatar" type="file" accept="image/*" onChange={e => setAvatarFile(e.target.files?.[0] || null)} />
-              {existingAvatarUrl && <Image src={existingAvatarUrl} alt="avatar" width={96} height={96} className="w-24 h-24 mt-2 object-cover rounded-full" />}
+              {form.watch("avatar_url") && <Image src={form.watch("avatar_url")!} alt="avatar" width={96} height={96} className="w-24 h-24 mt-2 object-cover rounded-full" />}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="banner">Capa</Label>
               <Input id="banner" type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} />
-              {existingBannerUrl && <Image src={existingBannerUrl} alt="banner" width={192} height={80} className="w-48 h-20 mt-2 object-cover rounded" />}
+              {form.watch("banner_url") && <Image src={form.watch("banner_url")!} alt="banner" width={192} height={80} className="w-48 h-20 mt-2 object-cover rounded" />}
             </div>
 
             <FormField

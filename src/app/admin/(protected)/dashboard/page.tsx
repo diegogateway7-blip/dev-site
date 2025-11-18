@@ -1,6 +1,4 @@
-"use client";
-
-import type { ElementType } from "react";
+import { Suspense, type ElementType } from "react";
 import {
   Users,
   ImageIcon,
@@ -10,8 +8,7 @@ import {
   Sparkles,
   AlertTriangle,
 } from "lucide-react";
-
-import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
+import { getDashboardMetrics, type DashboardMetrics } from "@/lib/data";
 import {
   ActivityListCard,
   ChartCard,
@@ -32,7 +29,8 @@ type Insight = {
   icon: ElementType;
 };
 
-export default function AdminDashboardPage() {
+// Componente principal que busca e exibe os dados
+async function DashboardData() {
   const {
     modelsCount,
     mediaCount,
@@ -41,9 +39,7 @@ export default function AdminDashboardPage() {
     uploadsData,
     uploadsTrend,
     scheduledMedia,
-    loading,
-    error,
-  } = useDashboardMetrics();
+  } = await getDashboardMetrics();
 
   const totalUploads = uploadsData.reduce((acc, day) => acc + day.count, 0);
   const averageUploads = uploadsData.length ? (totalUploads / uploadsData.length).toFixed(1) : "0";
@@ -78,54 +74,57 @@ export default function AdminDashboardPage() {
   ];
 
   return (
+    <>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Users} title="Total de Modelos" value={modelsCount} caption="Base ativa" />
+        <StatCard icon={ImageIcon} title="Total de Mídias" value={mediaCount} caption="Portfolio publicado" />
+        <QuickActionCard icon={PlusCircle} title="Adicionar Modelo" description="Cadastre um novo perfil" href="/admin/models/new" />
+        <QuickActionCard icon={BookOpen} title="Ver Tutorial" description="Guia completo da operação" href="/admin/tutorial" />
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <ChartCard data={uploadsData} trend={uploadsTrend} />
+        <div className="grid gap-6 lg:col-span-2 md:grid-cols-2">
+          <ActivityListCard
+            title="Últimos Modelos"
+            items={recentModels}
+            emptyMessage="Nenhuma modelo cadastrada recentemente."
+            renderItem={model => <ModelRow key={model.id} model={model} />}
+          />
+          <ActivityListCard
+            title="Últimas Mídias"
+            items={recentMedia}
+            emptyMessage="Nenhum upload recente."
+            renderItem={media => <MediaRow key={media.id} media={media} />}
+          />
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <ScheduledMediaCard items={scheduledMedia} />
+        <InsightsCard insights={insights} />
+      </div>
+    </>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
     <div className="container mx-auto py-10">
       <div className="mb-6">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">Monitore performance, próximos lançamentos e ative ações rápidas.</p>
       </div>
-
-      {error && <div className="mb-6 rounded-md border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>}
-
-      {loading ? (
-        <DashboardSkeleton />
-      ) : (
-        <>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard icon={Users} title="Total de Modelos" value={modelsCount} caption="Base ativa" />
-            <StatCard icon={ImageIcon} title="Total de Mídias" value={mediaCount} caption="Portfolio publicado" />
-            <QuickActionCard icon={PlusCircle} title="Adicionar Modelo" description="Cadastre um novo perfil" href="/admin/models/new" />
-            <QuickActionCard icon={BookOpen} title="Ver Tutorial" description="Guia completo da operação" href="/admin/tutorial" />
-          </div>
-
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
-            <ChartCard data={uploadsData} trend={uploadsTrend} />
-            <div className="grid gap-6 lg:col-span-2 md:grid-cols-2">
-              <ActivityListCard
-                title="Últimos Modelos"
-                items={recentModels}
-                emptyMessage="Nenhuma modelo cadastrada recentemente."
-                renderItem={model => <ModelRow key={model.id} model={model} />}
-              />
-              <ActivityListCard
-                title="Últimas Mídias"
-                items={recentMedia}
-                emptyMessage="Nenhum upload recente."
-                renderItem={media => <MediaRow key={media.id} media={media} />}
-              />
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <ScheduledMediaCard items={scheduledMedia} />
-            <InsightsCard insights={insights} />
-          </div>
-        </>
-      )}
+      
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardData />
+      </Suspense>
     </div>
   );
 }
 
 function InsightsCard({ insights }: { insights: Insight[] }) {
+  // ... (o conteúdo deste componente permanece o mesmo)
   return (
     <Card className="border-white/10 bg-[color:var(--surface-card)]/80 shadow-soft">
       <CardHeader>
