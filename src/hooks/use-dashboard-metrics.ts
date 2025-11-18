@@ -63,18 +63,33 @@ export function useDashboardMetrics() {
           .order("publicar_em", { ascending: true })
           .limit(5);
 
-        const [
-          { data: modelsData, count: modelsCountData, error: modelsError },
-          { data: mediaData, count: mediaCountData, error: mediaError },
-          { data: uploadsRaw, error: uploadsError },
-          { data: scheduledData, error: scheduledError },
-        ] = await Promise.all([modelsPromise, mediaPromise, uploadsPromise, scheduledPromise]);
+        const [modelsRes, mediaRes, uploadsRes, scheduledRes] = await Promise.allSettled([
+          modelsPromise,
+          mediaPromise,
+          uploadsPromise,
+          scheduledPromise,
+        ]);
 
-        if (modelsError) throw modelsError;
-        if (mediaError) throw mediaError;
-        if (uploadsError) throw uploadsError;
-        const columnMissing = isMissingColumnError(scheduledError, "publicar_em");
-        if (scheduledError && !columnMissing) throw scheduledError;
+        // Process models
+        const modelsData = modelsRes.status === "fulfilled" ? modelsRes.value.data : [];
+        const modelsCount = modelsRes.status === "fulfilled" ? modelsRes.value.count : 0;
+        if (modelsRes.status === "rejected") console.error("Error fetching models:", modelsRes.reason);
+
+        // Process media
+        const mediaData = mediaRes.status === "fulfilled" ? mediaRes.value.data : [];
+        const mediaCount = mediaRes.status === "fulfilled" ? mediaRes.value.count : 0;
+        if (mediaRes.status === "rejected") console.error("Error fetching media:", mediaRes.reason);
+
+        // Process uploads
+        const uploadsRaw = uploadsRes.status === "fulfilled" ? uploadsRes.value.data : [];
+        if (uploadsRes.status === "rejected") console.error("Error fetching uploads:", uploadsRes.reason);
+
+        // Process scheduled media
+        const scheduledData = scheduledRes.status === "fulfilled" ? scheduledRes.value.data : [];
+        const columnMissing = scheduledRes.status === 'rejected' && isMissingColumnError(scheduledRes.reason, "publicar_em");
+        if (scheduledRes.status === "rejected" && !columnMissing) {
+          console.error("Error fetching scheduled media:", scheduledRes.reason);
+        }
 
         const uploadsByDay = (uploadsRaw || []).reduce<Record<string, number>>((acc, item) => {
           const date = new Date(item.created_at).toLocaleDateString("pt-BR", {
