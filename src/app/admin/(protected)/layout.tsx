@@ -36,6 +36,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
     // eslint-disable-next-line
   }, []);
+
+  // Efeito para verificar a autenticação
+  useEffect(() => {
+    const authData = localStorage.getItem('admin-auth');
+    if (!authData) {
+      router.replace('/admin/login');
+    }
+  }, [router]);
+
   return (
     <div className="relative min-h-screen bg-[hsl(var(--background))] text-foreground">
       <div
