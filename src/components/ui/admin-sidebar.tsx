@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +14,7 @@ import {
   ChevronRight,
   CloudUpload,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const navLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,8 +26,9 @@ const navLinks = [
   { href: "/admin/tutorial", label: "Tutorial", icon: BookOpen },
 ];
 
-export default function AdminSidebar({ onLogout }: { onLogout?: () => void }) {
+export default function AdminSidebar() {
   const pathname = usePathname() || "";
+  const router = useRouter();
 
   const isActive = (href: string) => {
     // A rota exata é sempre a mais prioritária
@@ -35,12 +38,24 @@ export default function AdminSidebar({ onLogout }: { onLogout?: () => void }) {
     return href !== "/admin/dashboard" && pathname.startsWith(href);
   };
 
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      toast({ title: "Logout realizado com sucesso!" });
+      router.push('/admin/login');
+      router.refresh(); // Limpa o cache de rotas
+    } else {
+      toast({ title: "Erro no logout", description: error.message, variant: "destructive" });
+    }
+  };
+
   return (
-    <aside className="h-screen bg-[color:var(--surface-card)] text-white flex flex-col w-60 p-4 fixed inset-y-0 left-0 z-40 border-r border-white/10 shadow-soft backdrop-blur-3xl">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-60 flex-col border-r border-white/10 bg-[color:var(--surface-card)] p-4 text-white shadow-soft backdrop-blur-3xl lg:flex">
       <div className="mb-8 px-2">
-        <span className="text-2xl font-bold font-headline">Admin Panel</span>
+        <span className="font-headline text-2xl font-bold">Admin Panel</span>
       </div>
-      <nav className="flex-1 flex flex-col gap-2">
+      <nav className="flex flex-1 flex-col gap-2">
         {navLinks.map(link => {
           const Icon = link.icon;
           const active = isActive(link.href);
@@ -48,9 +63,9 @@ export default function AdminSidebar({ onLogout }: { onLogout?: () => void }) {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm transition-colors
+              className={`flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors
                 ${active
-                  ? 'bg-white/10 text-white font-semibold'
+                  ? 'bg-white/10 font-semibold text-white'
                   : 'text-white/70 hover:bg-white/5 hover:text-white'
                 }`}
             >
@@ -64,8 +79,8 @@ export default function AdminSidebar({ onLogout }: { onLogout?: () => void }) {
         })}
       </nav>
       <button
-        onClick={onLogout}
-        className="mt-auto flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm text-white/70 hover:bg-red-500/20 hover:text-white transition-colors"
+        onClick={handleLogout}
+        className="mt-auto flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-red-500/20 hover:text-white"
       >
         <LogOut className="h-5 w-5" />
         <span>Logout</span>
