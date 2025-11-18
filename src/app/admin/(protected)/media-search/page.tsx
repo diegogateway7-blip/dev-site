@@ -215,9 +215,12 @@ function MediaCard({ item, onDelete }: { item: Media; onDelete: (item: Media) =>
               onError={() => setHasImageError(true)}
             />
           ) : item.tipo === 'video' ? (
-            <div className="flex h-full w-full items-center justify-center bg-black/40">
-              <Video className="h-10 w-10 text-white/70" />
-            </div>
+            <video
+              src={`${item.url}#t=0.1`}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-black/30">
               <ImageIcon className="h-8 w-8 text-white/60" />
