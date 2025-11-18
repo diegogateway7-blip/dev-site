@@ -124,8 +124,8 @@ export function useDashboardMetrics() {
             : Number((((recentTotal - previousTotal) / previousTotal) * 100).toFixed(1));
 
         setMetrics({
-          modelsCount: modelsCountData ?? 0,
-          mediaCount: mediaCountData ?? 0,
+          modelsCount: modelsCount ?? 0,
+          mediaCount: mediaCount ?? 0,
           recentModels: (modelsData as Model[]) || [],
           recentMedia: (mediaData as Media[]) || [],
           uploadsData: filledUploads,
