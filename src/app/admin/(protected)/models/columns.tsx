@@ -102,6 +102,18 @@ export const getColumns = (onModelDeleted: () => void): ColumnDef<Model>[] => [
     },
   },
   {
+    accessorKey: "slug",
+    header: "Slug",
+    cell: ({ row }) => {
+      const slug = row.getValue("slug") as string | null;
+      return slug ? (
+        <span className="text-xs text-white/70">{slug}</span>
+      ) : (
+        <span className="text-xs text-white/40">—</span>
+      );
+    },
+  },
+  {
     accessorKey: "nome",
     header: ({ column }) => {
       return (
@@ -139,6 +151,13 @@ export const getColumns = (onModelDeleted: () => void): ColumnDef<Model>[] => [
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild><Link href={`/admin/models/${model.id}`}>Editar Modelo</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link href={`/admin/models/${model.id}/media`}>Gerenciar Mídia</Link></DropdownMenuItem>
+            {model.slug && (
+              <DropdownMenuItem asChild>
+                <Link href={`/modelos/${model.slug}`} target="_blank">
+                  Ver página pública
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DeleteAction model={model} onDelete={onModelDeleted} />
           </DropdownMenuContent>

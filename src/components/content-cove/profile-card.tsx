@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Crown, ShieldCheck, Clock4 } from 'lucide-react';
 import { PixGiftDialog } from './pix-gift';
+import type { Model } from '@/types';
 
 const VerifiedIcon = () => (
   <svg
@@ -27,21 +28,27 @@ const stats = [
   { label: 'VIP ativos', value: '4.8K', detail: 'satisfação 4.9/5' },
 ];
 
-const perks = ['Atualização diária', 'Conteúdo 4K', 'Atendimento anônimo', 'Garantia sigilo total'];
+type ProfileCardProps = {
+  model: Model;
+};
 
-export function ProfileCard() {
+export function ProfileCard({ model }: ProfileCardProps) {
   const { coverImage, profileAvatar } = placeholderImages.profile;
+  const coverSrc = model.banner_url ?? coverImage.url;
+  const coverAlt = model.banner_url ? `Banner de ${model.nome}` : coverImage.alt;
+  const avatarSrc = model.avatar_url ?? profileAvatar.url;
+  const avatarAlt = model.avatar_url ? model.nome : profileAvatar.alt;
+  const username = model.redes || `@${model.slug || 'vip'}`;
 
   return (
     <section className="relative mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-[color:var(--surface-card)] shadow-soft">
       <div className="relative h-64 w-full overflow-hidden md:h-80">
         <Image
-          src={coverImage.url}
-          alt={coverImage.alt}
+          src={coverSrc}
+          alt={coverAlt}
           data-ai-hint={coverImage.hint}
           width={coverImage.width}
           height={coverImage.height}
-          
           priority
           className="h-full w-full object-cover"
         />
@@ -58,18 +65,18 @@ export function ProfileCard() {
             <div className="relative -mt-24">
               <span className="absolute inset-0 rounded-full bg-[var(--gradient-main)] blur-2xl opacity-60" aria-hidden />
               <Avatar className="relative h-32 w-32 border-4 border-white shadow-soft">
-                <AvatarImage src={profileAvatar.url} data-ai-hint={profileAvatar.hint} alt={profileAvatar.alt} />
-                <AvatarFallback>LS</AvatarFallback>
+                <AvatarImage src={avatarSrc} data-ai-hint={profileAvatar.hint} alt={avatarAlt} />
+                <AvatarFallback>{model.nome?.slice(0, 2)?.toUpperCase() || 'VIP'}</AvatarFallback>
               </Avatar>
             </div>
             <div className="space-y-2 text-[hsl(var(--text-900))]">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-3xl font-headline font-semibold text-[hsl(var(--text-900))]">Larissa Santos</h1>
+                <h1 className="text-3xl font-headline font-semibold text-[hsl(var(--text-900))]">{model.nome}</h1>
                 <VerifiedIcon />
               </div>
-              <p className="text-[hsla(var(--text-900),_0.7)]">@larissasantos</p>
+              <p className="text-[hsla(var(--text-900),_0.7)]">{username}</p>
               <p className="max-w-lg text-lg text-[hsla(var(--text-900),_0.85)]">
-                Sensual premium & intimista. Packs exclusivos, bastidores RAW e roleplays executivos sob demanda.
+                {model.bio || 'Modelo premium com conteúdo exclusivo e atualizações semanais.'}
               </p>
             </div>
           </div>

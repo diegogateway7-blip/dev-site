@@ -2,9 +2,9 @@ import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const LockLogo = () => (
+const LockLogo = ({ label = "SigiloVip" }: { label?: string }) => (
   <span className="relative inline-flex items-center gap-2 rounded-full px-3 py-1 font-headline text-2xl font-semibold text-white">
-    SigiloVip
+    {label}
     <svg width="22" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="sigilo-lock" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -20,19 +20,22 @@ const LockLogo = () => (
   </span>
 );
 
-export function ProfileHeader() {
+type ProfileHeaderProps = {
+  modelName?: string;
+  username?: string | null;
+};
+
+export function ProfileHeader({ modelName = "SigiloVip", username = "@conteudo.vip" }: ProfileHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[rgba(16,14,30,0.85)] backdrop-blur-2xl">
       <nav className="container mx-auto max-w-5xl px-4">
         <div className="flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="flex items-start gap-3">
             <div className="flex flex-col gap-1">
-              <LockLogo />
+              <LockLogo label={modelName} />
               <div className="flex items-center gap-2 text-sm text-white/70">
                 <Badge variant="glass" className="uppercase text-[10px] tracking-widest">+18</Badge>
-                <span className="inline-flex items-center gap-1">
-                  Conteúdo exclusivo
-                </span>
+                <span className="inline-flex items-center gap-1">{username || "Conteúdo exclusivo"}</span>
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { slugify } from "@/lib/utils";
 
 type ExternalProfile = {
   coverImage?: {
@@ -137,6 +138,7 @@ export default function MediaImportPage() {
         redes: newModelRedes || null,
         avatar_url: parsedData?.profile?.profileAvatar?.url || null,
         banner_url: parsedData?.profile?.coverImage?.url || null,
+        slug: slugify(newModelName),
       };
       const { data, error } = await supabase.from("models").insert([payload]).select("id").single();
       if (error) throw error;
@@ -150,6 +152,16 @@ export default function MediaImportPage() {
     }
   }
 
+  function buildPayload(modelId: string) {
+    return parsedData!.mediaItems.map(item => ({
+      modelo_id: Number(modelId),
+      url: item.url,
+      tipo: item.type === "video" ? "video" : "photo",
+      descricao: item.hint?.trim() ? item.hint : null,
+      publicar_em: new Date().toISOString(),
+    }));
+  }
+
   async function handleImportMedia() {
     if (!parsedData) {
       toast({ title: "Processe o JSON primeiro.", variant: "destructive" });
@@ -160,18 +172,19 @@ export default function MediaImportPage() {
       return;
     }
 
-    const payload = parsedData.mediaItems.map(item => ({
-      modelo_id: Number(selectedModelId),
-      url: item.url,
-      tipo: item.type === "video" ? "video" : "photo",
-      descricao: item.hint?.trim() ? item.hint : null,
-      publicar_em: new Date().toISOString(),
-    }));
-
+    const payload = buildPayload(selectedModelId);
     setImporting(true);
     try {
       const { error } = await supabase.from("media").insert(payload);
-      if (error) throw error;
+      if (error) {
+        if (isMissingColumnError(error, "publicar_em")) {
+          const sanitized = payload.map(({ publicar_em, ...rest }) => rest);
+          const retry = await supabase.from("media").insert(sanitized);
+          if (retry.error) throw retry.error;
+        } else {
+          throw error;
+        }
+      }
       toast({ title: "Mídias importadas com sucesso!", description: `${payload.length} registros criados.` });
       setParsedData(null);
       setRawJson("");
@@ -285,7 +298,7 @@ export default function MediaImportPage() {
             <CardDescription>Selecione um modelo existente para receber todos os registros importados.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={modelsLoading || models.length === 0}>
+            <Select value={selectedModelId || undefined} onValueChange={setSelectedModelId} disabled={modelsLoading || models.length === 0}>
               <SelectTrigger className="bg-black/20">
                 <SelectValue placeholder={modelsLoading ? "Carregando modelos..." : "Selecione um modelo"} />
               </SelectTrigger>
@@ -365,5 +378,13 @@ function SummaryStat({ label, value }: { label: string; value: number }) {
       <p className="text-2xl font-semibold text-white">{value}</p>
     </div>
   );
+}
+
+function isMissingColumnError(error: any, column: string) {
+  if (!error) return false;
+  const code = error?.code;
+  if (code && String(code) === "42703") return true;
+  const message = error?.message?.toLowerCase?.() || "";
+  return message.includes("does not exist") && message.includes(column.toLowerCase());
 }
 
