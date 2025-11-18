@@ -57,6 +57,7 @@ export default function MediaImportPage() {
   const [processingJson, setProcessingJson] = useState(false);
   const [creatingModel, setCreatingModel] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [supportsScheduling, setSupportsScheduling] = useState(true);
 
   useEffect(() => {
     loadModels();
@@ -152,14 +153,19 @@ export default function MediaImportPage() {
     }
   }
 
-  function buildPayload(modelId: string) {
-    return parsedData!.mediaItems.map(item => ({
-      modelo_id: Number(modelId),
-      url: item.url,
-      tipo: item.type === "video" ? "video" : "photo",
-      descricao: item.hint?.trim() ? item.hint : null,
-      publicar_em: new Date().toISOString(),
-    }));
+  function buildPayload(modelId: string, includeScheduling = supportsScheduling) {
+    return parsedData!.mediaItems.map(item => {
+      const base = {
+        modelo_id: Number(modelId),
+        url: item.url,
+        tipo: item.type === "video" ? "video" : "photo",
+        descricao: item.hint?.trim() ? item.hint : null,
+      } as any;
+      if (includeScheduling) {
+        base.publicar_em = new Date().toISOString();
+      }
+      return base;
+    });
   }
 
   async function handleImportMedia() {
@@ -172,14 +178,15 @@ export default function MediaImportPage() {
       return;
     }
 
-    const payload = buildPayload(selectedModelId);
+    const payload = buildPayload(selectedModelId, supportsScheduling);
     setImporting(true);
     try {
       const { error } = await supabase.from("media").insert(payload);
       if (error) {
-        if (isMissingColumnError(error, "publicar_em")) {
-          const sanitized = payload.map(({ publicar_em, ...rest }) => rest);
-          const retry = await supabase.from("media").insert(sanitized);
+        if (supportsScheduling && isMissingColumnError(error, "publicar_em")) {
+          setSupportsScheduling(false);
+          const retryPayload = buildPayload(selectedModelId, false);
+          const retry = await supabase.from("media").insert(retryPayload);
           if (retry.error) throw retry.error;
         } else {
           throw error;

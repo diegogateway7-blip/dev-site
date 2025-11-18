@@ -13,6 +13,17 @@ export type Model = {
   slug?: string | null;
 };
 
+export type Banner = {
+  id: string;
+  created_at: string;
+  titulo: string;
+  tipo: 'image' | 'video';
+  url: string | null;
+  link?: string | null;
+  ordem: number;
+  ativo: boolean;
+};
+
 /**
  * Representa a estrutura de dados para uma Mídia.
  */
