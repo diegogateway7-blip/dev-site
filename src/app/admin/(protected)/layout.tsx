@@ -45,13 +45,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="relative z-10 flex min-h-screen">
         {/* Suspense é necessário porque ProgressBar usa hooks de navegação */}
         <Suspense fallback={null}>
-          <ProgressBar />
+            <ProgressBar />
         </Suspense>
         <AdminSidebar onLogout={() => handleLogout(true)} />
         <div className="flex-1 ml-60">
           <main className="mx-auto max-w-6xl px-8 py-10">{children}</main>
         </div>
-      </div>
+        </div>
     </div>
   );
 }
