@@ -36,6 +36,12 @@ const remotePatterns = [
     port: '',
     pathname: '/**',
   },
+  {
+    protocol: 'https',
+    hostname: 'raspatudopix.com.br',
+    port: '',
+    pathname: '/**',
+  },
 ].filter(Boolean) as NonNullable<NextConfig['images']>['remotePatterns'];
 
 const nextConfig: NextConfig = {
