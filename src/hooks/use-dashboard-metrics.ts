@@ -73,7 +73,8 @@ export function useDashboardMetrics() {
         if (modelsError) throw modelsError;
         if (mediaError) throw mediaError;
         if (uploadsError) throw uploadsError;
-        if (scheduledError) throw scheduledError;
+        const columnMissing = isMissingColumnError(scheduledError, "publicar_em");
+        if (scheduledError && !columnMissing) throw scheduledError;
 
         const uploadsByDay = (uploadsRaw || []).reduce<Record<string, number>>((acc, item) => {
           const date = new Date(item.created_at).toLocaleDateString("pt-BR", {
@@ -114,7 +115,7 @@ export function useDashboardMetrics() {
           recentMedia: (mediaData as Media[]) || [],
           uploadsData: filledUploads,
           uploadsTrend: trend,
-          scheduledMedia: scheduledData || [],
+          scheduledMedia: columnMissing ? [] : scheduledData || [],
         });
       } catch (e: any) {
         setError("Erro ao buscar dados do dashboard: " + (e?.message || ""));
@@ -131,5 +132,13 @@ export function useDashboardMetrics() {
     loading,
     error,
   };
+}
+
+function isMissingColumnError(error: any, column: string) {
+  if (!error) return false;
+  const code = (error as any)?.code;
+  if (code && String(code) === "42703") return true;
+  const message = (error as any)?.message?.toLowerCase?.();
+  return !!(message && message.includes("does not exist") && message.includes(column.toLowerCase()));
 }
 
