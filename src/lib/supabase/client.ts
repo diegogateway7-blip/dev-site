@@ -45,7 +45,8 @@ function ensureClient() {
   const { url, anonKey } = readCredentials();
 
   if (!url || !anonKey) {
-    throw new Error('Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL/ANON_KEY ou use /admin/config.');
+    console.warn('Supabase credentials missing: configure NEXT_PUBLIC_SUPABASE_URL/ANON_KEY or use /admin/config.');
+    return cachedClient ?? createBrowserClient('https://example.supabase.co', 'public-anon-key-placeholder');
   }
 
   if (!cachedClient || cachedCreds.url !== url || cachedCreds.anonKey !== anonKey) {
