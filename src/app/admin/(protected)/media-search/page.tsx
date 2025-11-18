@@ -19,9 +19,15 @@ import { Search, Trash2, Video, Camera, ImageIcon, Copy, ExternalLink } from "lu
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 
+type FilterState = {
+  description: string;
+  type: 'photo' | 'video' | null;
+  modelId: string | null;
+};
+
 export default function MediaLibraryPage() {
   const { toast } = useToast();
-  const [filters, setFilters] = useState({ description: "", type: "", modelId: "" });
+  const [filters, setFilters] = useState<FilterState>({ description: "", type: null, modelId: null });
   const [mediaItems, setMediaItems] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +40,7 @@ export default function MediaLibraryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchMedia(searchFilters = filters) {
+  async function fetchMedia(searchFilters: FilterState = filters) {
     setLoading(true);
     setError(null);
     try {
@@ -85,9 +91,9 @@ export default function MediaLibraryPage() {
     }
   };
 
-  const handleFilterChange = (key: 'description' | 'modelId' | 'type', value: string) => {
+  function handleFilterChange<K extends keyof FilterState>(key: K, value: FilterState[K]) {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,25 +119,28 @@ export default function MediaLibraryPage() {
           onChange={e => handleFilterChange('description', e.target.value)}
           className="bg-black/20"
         />
-        <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+        <Select
+          value={filters.type ?? undefined}
+          onValueChange={value => handleFilterChange('type', value === 'all' ? null : (value as 'photo' | 'video'))}
+        >
           <SelectTrigger className="bg-black/20">
             <SelectValue placeholder="Filtrar por tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os tipos</SelectItem>
+            <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="photo">Foto</SelectItem>
             <SelectItem value="video">Vídeo</SelectItem>
           </SelectContent>
         </Select>
         <Select
-          value={filters.modelId}
-          onValueChange={value => handleFilterChange('modelId', value)}
+          value={filters.modelId ?? undefined}
+          onValueChange={value => handleFilterChange('modelId', value === 'all' ? null : value)}
         >
           <SelectTrigger className="bg-black/20">
             <SelectValue placeholder="Filtrar por modelo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os modelos</SelectItem>
+            <SelectItem value="all">Todos os modelos</SelectItem>
             {models.map(model => (
               <SelectItem key={model.id} value={String(model.id)}>
                 {model.nome}
@@ -149,8 +158,9 @@ export default function MediaLibraryPage() {
             variant="outline"
             className="w-full border-white/20 text-white/80"
             onClick={() => {
-              setFilters({ description: "", type: "", modelId: "" });
-              fetchMedia({ description: "", type: "", modelId: "" });
+              const resetFilters: FilterState = { description: "", type: null, modelId: null };
+              setFilters(resetFilters);
+              fetchMedia(resetFilters);
             }}
           >
             Limpar
