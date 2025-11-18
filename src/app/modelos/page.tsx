@@ -7,11 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import placeholderImages from '@/lib/placeholder-images.json';
 
 export default async function ModelsIndexPage() {
-  const supabase = createServer();
-  const { data, error } = await supabase.from('models').select('*').order('created_at', { ascending: false });
-  const models = (data as Model[]) || [];
+  let models: Model[] = [];
 
-  if (error) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      const supabase = createServer();
+      const { data, error } = await supabase.from('models').select('*').order('created_at', { ascending: false });
+      models = (data as Model[]) || [];
+
+      if (error) {
+        console.error('Erro ao carregar modelos', error);
+      }
+    }
+  } catch (error) {
     console.error('Erro ao carregar modelos', error);
   }
 

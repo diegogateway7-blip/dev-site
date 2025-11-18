@@ -15,6 +15,10 @@ export function ProgressBar() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
     // Apenas para garantir que o NProgress seja importado e configurado no cliente
     NProgress.configure({ showSpinner: false });
 

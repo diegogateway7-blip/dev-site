@@ -15,47 +15,59 @@ type PageProps = {
 };
 
 export default async function ModelShowcasePage({ params }: PageProps) {
-  const supabase = createServer();
   const { slug } = params;
 
-  const { data: model, error: modelError } = await supabase
-    .from('models')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (modelError || !model) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      notFound();
+    }
+
+    const supabase = createServer();
+    const { data: model, error: modelError } = await supabase
+      .from('models')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+
+    if (modelError || !model) {
+      notFound();
+    }
+
+    const { data: mediaItems = [] } = await supabase
+      .from('media')
+      .select('*')
+      .eq('modelo_id', model.id)
+      .order('created_at', { ascending: false });
+
+    const { data: bannersData = [] } = await supabase
+      .from('banners')
+      .select('*')
+      .eq('ativo', true)
+      .order('ordem', { ascending: true });
+
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <ProfileHeader modelName={model.nome} username={model.redes || `@${model.slug}`} />
+        <main className="container mx-auto max-w-5xl px-4 pb-16">
+          <HeroBanners banners={(bannersData as Banner[]) || []} />
+          <ProfileCard model={model as Model} />
+          <Suspense fallback={<MediaGridSkeleton />}>
+            <ExclusiveContent initialMediaItems={(mediaItems as Media[]) || []} />
+          </Suspense>
+        </main>
+        <footer className="border-t border-white/10 py-10">
+          <div className="container mx-auto max-w-5xl px-4 text-center text-white/60 text-sm">
+            Conteúdo hospedado com segurança. Última atualização: {new Date(model.created_at).toLocaleDateString('pt-BR')}
+          </div>
+        </footer>
+      </div>
+    );
+  } catch (error) {
+    console.error('Erro ao carregar página do modelo:', error);
     notFound();
   }
-
-  const { data: mediaItems = [] } = await supabase
-    .from('media')
-    .select('*')
-    .eq('modelo_id', model.id)
-    .order('created_at', { ascending: false });
-
-  const { data: bannersData = [] } = await supabase
-    .from('banners')
-    .select('*')
-    .eq('ativo', true)
-    .order('ordem', { ascending: true });
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <ProfileHeader modelName={model.nome} username={model.redes || `@${model.slug}`} />
-      <main className="container mx-auto max-w-5xl px-4 pb-16">
-        <HeroBanners banners={(bannersData as Banner[]) || []} />
-        <ProfileCard model={model as Model} />
-        <Suspense fallback={<MediaGridSkeleton />}>
-          <ExclusiveContent initialMediaItems={(mediaItems as Media[]) || []} />
-        </Suspense>
-      </main>
-      <footer className="border-t border-white/10 py-10">
-        <div className="container mx-auto max-w-5xl px-4 text-center text-white/60 text-sm">
-          Conteúdo hospedado com segurança. Última atualização: {new Date(model.created_at).toLocaleDateString('pt-BR')}
-        </div>
-      </footer>
-    </div>
-  );
 }
 
