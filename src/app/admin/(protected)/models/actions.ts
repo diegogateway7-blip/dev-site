@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils";
 import * as z from "zod";
@@ -49,7 +49,7 @@ export async function saveModel(
     };
   }
 
-  const supabase = createServerClient();
+  const supabase = createServer();
   const { data: validatedData } = validatedFields;
   
   const slugValue = validatedData.slug && validatedData.slug.length > 0
