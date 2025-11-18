@@ -1,26 +1,39 @@
 "use client";
-import React, { useEffect, useRef, Suspense } from 'react'; // Adicionado Suspense
+import React, { useEffect, useRef, Suspense, useState } from 'react';
 import AdminSidebar from '@/components/ui/admin-sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { ProgressBar } from '@/components/ui/progress-bar'; // Importa o ProgressBar
+import { ProgressBar } from '@/components/ui/progress-bar';
 
 const SESSION_TIMEOUT_MIN = 30;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout|number|null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const authData = localStorage.getItem('admin-auth');
+    if (!authData) {
+      router.replace('/admin/login');
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
 
   function handleLogout(manual = false) {
     localStorage.removeItem('admin-auth');
     if (!manual) toast({ title: 'Sessão encerrada por inatividade.' });
     router.push('/admin/login');
   }
+
   function resetTimeout() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current as number);
     timeoutRef.current = setTimeout(() => handleLogout(false), SESSION_TIMEOUT_MIN*60*1000);
   }
+
   useEffect(() => {
+    if (isCheckingAuth) return; // Não iniciar timers até que a autenticação seja confirmada
     resetTimeout();
     function activityHandler() { resetTimeout(); }
     window.addEventListener('click', activityHandler);
@@ -34,16 +47,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       window.removeEventListener('mousemove', activityHandler);
       window.removeEventListener('scroll', activityHandler);
     };
-    // eslint-disable-next-line
-  }, []);
+  }, [isCheckingAuth]);
 
-  // Efeito para verificar a autenticação
-  useEffect(() => {
-    const authData = localStorage.getItem('admin-auth');
-    if (!authData) {
-      router.replace('/admin/login');
-    }
-  }, [router]);
+  if (isCheckingAuth) {
+    return null; // Ou um componente de loading em tela cheia
+  }
 
   return (
     <div className="relative min-h-screen bg-[hsl(var(--background))] text-foreground">
