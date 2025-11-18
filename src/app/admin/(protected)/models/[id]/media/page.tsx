@@ -157,7 +157,7 @@ export default function AdminModelMediaPage() {
             {m.tipo === 'photo' ? (
               <img src={m.url} alt="midia" className="object-cover w-full h-36 rounded" />
             ) : (
-              <video src={m.url} controls className="object-cover w-full h-36 rounded" />
+              <video src={`${m.url}#t=0.1`} className="object-cover w-full h-36 rounded" />
             )}
             <div className="text-xs mt-1 mb-2 text-gray-700">
               {m.descricao} {' '}
