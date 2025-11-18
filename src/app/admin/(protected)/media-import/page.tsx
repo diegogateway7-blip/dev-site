@@ -43,7 +43,6 @@ type ExternalPayload = {
 type ModelOption = { id: number; nome: string };
 
 export default function MediaImportPage() {
-  const supabase = createClient();
   const { toast } = useToast();
 
   const [rawJson, setRawJson] = useState("");
@@ -99,6 +98,7 @@ export default function MediaImportPage() {
   async function loadModels() {
     setModelsLoading(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.from("models").select("id, nome").order("nome", { ascending: true });
       if (error) throw error;
       setModels(data || []);
@@ -133,6 +133,7 @@ export default function MediaImportPage() {
     }
     setCreatingModel(true);
     try {
+      const supabase = createClient();
       const payload = {
         nome: newModelName,
         bio: newModelBio,
@@ -178,6 +179,7 @@ export default function MediaImportPage() {
       return;
     }
 
+    const supabase = createClient();
     const payload = buildPayload(selectedModelId, supportsScheduling);
     setImporting(true);
     try {

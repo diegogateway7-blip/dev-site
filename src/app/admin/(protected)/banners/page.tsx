@@ -33,7 +33,6 @@ const bannerTypes = [
 ];
 
 export default function AdminBannersPage() {
-  const supabase = createClient();
   const { toast } = useToast();
 
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -59,6 +58,7 @@ export default function AdminBannersPage() {
     setLoading(true);
     setSchemaMissing(false);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.from("banners").select("*").order("ordem", { ascending: true });
       if (error) {
         if (isMissingTableError(error, "banners")) {
@@ -87,6 +87,7 @@ export default function AdminBannersPage() {
     setSubmitting(true);
 
     try {
+      const supabase = createClient();
       let uploadedUrl: string | null = null;
       if (file) {
         const path = `${Date.now()}_${file.name}`;
@@ -119,6 +120,7 @@ export default function AdminBannersPage() {
   }
 
   async function handleToggle(id: string, value: boolean) {
+    const supabase = createClient();
     const { error } = await supabase.from("banners").update({ ativo: value }).eq("id", id);
     if (error) {
       toast({ title: "Erro ao atualizar banner", description: error?.message || "", variant: "destructive" });
@@ -128,6 +130,7 @@ export default function AdminBannersPage() {
   }
 
   async function handleDelete(id: string) {
+    const supabase = createClient();
     const { error } = await supabase.from("banners").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro ao excluir banner", description: error?.message || "", variant: "destructive" });

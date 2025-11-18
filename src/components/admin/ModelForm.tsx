@@ -37,7 +37,6 @@ export default function ModelForm({ modelId }: ModelFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!modelId;
-  const supabase = createClient();
 
   // ESTADOS REINTRODUZIDOS para controle de UI
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -65,6 +64,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
       async function fetchModel() {
         setLoading(true);
         try {
+          const supabase = createClient();
           const { data, error } = await supabase.from("models").select("*").eq("id", modelId).single();
           if (error) throw error;
           // Popula o formulário com os dados existentes
@@ -85,10 +85,11 @@ export default function ModelForm({ modelId }: ModelFormProps) {
       }
       fetchModel();
     }
-  }, [modelId, supabase, form, isEditMode]);
+  }, [modelId, form, isEditMode]);
 
   // Função para upload de um arquivo
   async function uploadFile(file: File, name: string): Promise<string | null> {
+    const supabase = createClient();
     const { data, error } = await supabase.storage.from("models").upload(`${name}_${Date.now()}_${file.name}`, file, { upsert: true });
     if (error) throw error;
     return supabase.storage.from("models").getPublicUrl(data.path).data.publicUrl;
@@ -100,6 +101,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
     setFormError(null);
 
     try {
+      const supabase = createClient();
       let avatar_url = existingAvatarUrl;
       let banner_url = existingBannerUrl;
 
@@ -135,6 +137,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
     if (!modelId) return;
     setLoading(true);
     try {
+      const supabase = createClient();
       const { error } = await supabase.from("models").delete().eq("id", modelId);
       if (error) throw error;
       toast({ title: "Modelo excluído com sucesso!" });
