@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
+import { slugify } from "@/lib/utils";
 import Image from "next/image";
 
 // Imports para o formulário
@@ -24,6 +25,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 const formSchema = z.object({
   nome: z.string().min(3, { message: "O nome deve ter pelo menos 3 caracteres." }),
   bio: z.string().min(10, { message: "A bio deve ter pelo menos 10 caracteres." }),
+  slug: z.string().min(2, { message: "O slug deve ter pelo menos 2 caracteres." }).regex(/^[a-z0-9-]+$/, { message: "Use apenas letras minúsculas, números e hífens." }).optional(),
   redes: z.string().optional(),
 });
 
@@ -45,6 +47,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null); // Renomeado para não conflitar
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [slugEdited, setSlugEdited] = useState(false);
 
   // Configuração do React Hook Form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -52,6 +55,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
     defaultValues: {
       nome: "",
       bio: "",
+      slug: "",
       redes: "",
     },
   });
@@ -64,9 +68,15 @@ export default function ModelForm({ modelId }: ModelFormProps) {
           const { data, error } = await supabase.from("models").select("*").eq("id", modelId).single();
           if (error) throw error;
           // Popula o formulário com os dados existentes
-          form.reset(data);
+          form.reset({
+            nome: data.nome ?? "",
+            bio: data.bio ?? "",
+            slug: data.slug ?? "",
+            redes: data.redes ?? "",
+          });
           setExistingAvatarUrl(data.avatar_url);
           setExistingBannerUrl(data.banner_url);
+          setSlugEdited(!!data.slug);
         } catch (e: any) {
           setFormError(e?.message || "Modelo não encontrado");
         } finally {
@@ -100,7 +110,8 @@ export default function ModelForm({ modelId }: ModelFormProps) {
         banner_url = await uploadFile(bannerFile, "banner");
       }
 
-      const finalData = { ...values, avatar_url, banner_url };
+      const slugValue = values.slug && values.slug.length > 0 ? values.slug : slugify(values.nome);
+      const finalData = { ...values, slug: slugValue, avatar_url, banner_url };
 
       const { error } = isEditMode
         ? await supabase.from("models").update(finalData).eq("id", modelId)
@@ -163,8 +174,40 @@ export default function ModelForm({ modelId }: ModelFormProps) {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do modelo" {...field} />
+                    <Input
+                      placeholder="Nome do modelo"
+                      {...field}
+                      onChange={(event) => {
+                        if (!slugEdited) {
+                          form.setValue("slug", slugify(event.target.value));
+                        }
+                        field.onChange(event);
+                      }}
+                    />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Slug (URL pública)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="ex: larissa-santos"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(event) => {
+                        setSlugEdited(true);
+                        field.onChange(event);
+                      }}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-white/70">A página ficará disponível em /modelos/{field.value || "slug"}.</p>
                   <FormMessage />
                 </FormItem>
               )}

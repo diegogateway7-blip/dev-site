@@ -6,10 +6,11 @@
 export type Model = {
   id: number;
   nome: string;
-  bio: string;
+  bio: string | null;
   avatar_url: string | null;
-  banner_url?: string | null; // Adicionado banner_url para completude
-  redes?: string; // Adicionado redes para completude
+  banner_url?: string | null;
+  redes?: string | null;
+  slug?: string | null;
 };
 
 /**
