@@ -1,4 +1,4 @@
-import { createBrowserClient, type SupabaseClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
 
 type Credentials = {
   url?: string | null;
@@ -46,11 +46,18 @@ function ensureClient() {
 
   if (!url || !anonKey) {
     console.warn('Supabase credentials missing: configure NEXT_PUBLIC_SUPABASE_URL/ANON_KEY or use /admin/config.');
-    return cachedClient ?? createBrowserClient('https://example.supabase.co', 'public-anon-key-placeholder');
+    if (!cachedClient) {
+      cachedClient = createSupabaseClient('https://example.supabase.co', 'public-anon-key-placeholder');
+    }
+    return cachedClient;
   }
 
   if (!cachedClient || cachedCreds.url !== url || cachedCreds.anonKey !== anonKey) {
-    cachedClient = createBrowserClient(url, anonKey);
+    cachedClient = createSupabaseClient(url, anonKey, {
+      auth: {
+        persistSession: true,
+      },
+    });
     cachedCreds = { url, anonKey };
   }
 
