@@ -21,7 +21,6 @@ const navLinks = [
   { href: "/admin/models", label: "Modelos", icon: Users },
   { href: "/admin/media-search", label: "Mídias", icon: ImageIcon },
   { href: "/admin/media-import", label: "Importar Mídias", icon: CloudUpload },
-  { href: "/admin/banners", label: "Banners", icon: Star },
   { href: "/admin/config", label: "Configurar", icon: Settings },
   { href: "/admin/tutorial", label: "Tutorial", icon: BookOpen },
 ];

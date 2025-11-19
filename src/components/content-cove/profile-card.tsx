@@ -34,8 +34,8 @@ type ProfileCardProps = {
 
 export function ProfileCard({ model }: ProfileCardProps) {
   const { coverImage, profileAvatar } = placeholderImages.profile;
-  const coverSrc = model.banner_url ?? coverImage.url;
-  const coverAlt = model.banner_url ? `Banner de ${model.nome}` : coverImage.alt;
+  const coverSrc = coverImage.url;
+  const coverAlt = coverImage.alt;
   const avatarSrc = model.avatar_url ?? profileAvatar.url;
   const avatarAlt = model.avatar_url ? model.nome : profileAvatar.alt;
   const username = model.redes || `@${model.slug || 'vip'}`;

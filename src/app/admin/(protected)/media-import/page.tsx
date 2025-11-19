@@ -139,7 +139,6 @@ export default function MediaImportPage() {
         bio: newModelBio,
         redes: newModelRedes || null,
         avatar_url: parsedData?.profile?.profileAvatar?.url || null,
-        banner_url: parsedData?.profile?.coverImage?.url || null,
         slug: slugify(newModelName),
       };
       const { data, error } = await supabase.from("models").insert([payload]).select("id").single();

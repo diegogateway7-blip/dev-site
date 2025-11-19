@@ -8,20 +8,8 @@ export type Model = {
   nome: string;
   bio: string | null;
   avatar_url: string | null;
-  banner_url?: string | null;
   redes?: string | null;
   slug?: string | null;
-};
-
-export type Banner = {
-  id: string;
-  created_at: string;
-  titulo: string;
-  tipo: 'image' | 'video';
-  url: string | null;
-  link?: string | null;
-  ordem: number;
-  ativo: boolean;
 };
 
 /**

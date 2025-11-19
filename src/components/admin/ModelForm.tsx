@@ -29,7 +29,6 @@ const formSchema = z.object({
   slug: z.string().min(2, { message: "O slug deve ter pelo menos 2 caracteres." }).regex(/^[a-z0-9-]+$/, { message: "Use apenas letras minúsculas, números e hífens." }).optional(),
   redes: z.string().optional(),
   avatar_url: z.string().url().optional().nullable(),
-  banner_url: z.string().url().optional().nullable(),
 });
 
 interface ModelFormProps {
@@ -43,7 +42,6 @@ export default function ModelForm({ modelId }: ModelFormProps) {
 
   // ESTADOS para controle de UI
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [slugEdited, setSlugEdited] = useState(false);
@@ -57,7 +55,6 @@ export default function ModelForm({ modelId }: ModelFormProps) {
       slug: "",
       redes: "",
       avatar_url: null,
-      banner_url: null,
     },
   });
 
@@ -105,10 +102,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
 
     try {
         if (avatarFile) {
-            avatar_url = await uploadFile(avatarFile, "avatar");
-        }
-        if (bannerFile) {
-            banner_url = await uploadFile(bannerFile, "banner");
+          avatar_url = await uploadFile(avatarFile, "avatar");
         }
     } catch (e: any) {
         toast({ title: "Erro de Upload", description: e.message, variant: "destructive" });
@@ -127,9 +121,6 @@ export default function ModelForm({ modelId }: ModelFormProps) {
     // Garante que as URLs das imagens (novas ou existentes) sejam incluídas
     if (avatar_url) {
       formData.set("avatar_url", avatar_url);
-    }
-    if (banner_url) {
-      formData.set("banner_url", banner_url);
     }
 
     const result = await saveModel({ message: "", error: false, fields: {} }, formData, modelId);
@@ -256,11 +247,7 @@ export default function ModelForm({ modelId }: ModelFormProps) {
               {form.watch("avatar_url") && <Image src={form.watch("avatar_url")!} alt="avatar" width={96} height={96} className="w-24 h-24 mt-2 object-cover rounded-full" />}
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="banner">Capa</Label>
-              <Input id="banner" type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} />
-              {form.watch("banner_url") && <Image src={form.watch("banner_url")!} alt="banner" width={192} height={80} className="w-48 h-20 mt-2 object-cover rounded" />}
-            </div>
+            {/* Banner/capa removed — feature disabled */}
 
             <FormField
               control={form.control}

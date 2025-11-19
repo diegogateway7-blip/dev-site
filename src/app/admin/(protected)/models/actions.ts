@@ -12,7 +12,6 @@ const formSchema = z.object({
   slug: z.string().min(2, { message: "O slug deve ter pelo menos 2 caracteres." }).regex(/^[a-z0-9-]+$/, { message: "Use apenas letras minúsculas, números e hífens." }).optional(),
   redes: z.string().optional(),
   avatar_url: z.string().url({ message: "URL de avatar inválida." }).optional().nullable(),
-  banner_url: z.string().url({ message: "URL de banner inválida." }).optional().nullable(),
 });
 
 // Tipagem para o estado de retorno da ação
@@ -37,7 +36,6 @@ export async function saveModel(
     slug: formData.get("slug"),
     redes: formData.get("redes"),
     avatar_url: formData.get("avatar_url") || null,
-    banner_url: formData.get("banner_url") || null,
   });
 
   if (!validatedFields.success) {

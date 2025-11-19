@@ -27,13 +27,7 @@ const steps = [
       "Gerencie packs em /admin/models/[id]/media ou use Importar Mídias.",
     ],
   },
-  {
-    title: "4. Banners",
-    body: [
-      "Use /admin/banners para subir imagens/vídeos hero. Defina ordem e estado (ativo/inativo).",
-      "Necessário bucket 'banners' no Storage.",
-    ],
-  },
+  // Banners step removed
   {
     title: "5. Segurança básica",
     body: [

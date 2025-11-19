@@ -5,8 +5,7 @@ import { ProfileCard } from '@/components/content-cove/profile-card';
 import { ExclusiveContent } from '@/components/content-cove/exclusive-content';
 import { MediaGridSkeleton } from '@/components/content-cove/media-grid';
 import { Suspense } from 'react';
-import type { Model, Media, Banner } from '@/types';
-import { HeroBanners } from '@/components/content-cove/hero-banners';
+import type { Model, Media } from '@/types';
 
 type PageProps = {
   params: {
@@ -42,17 +41,11 @@ export default async function ModelShowcasePage({ params }: PageProps) {
       .eq('modelo_id', model.id)
       .order('created_at', { ascending: false });
 
-    const { data: bannersData = [] } = await supabase
-      .from('banners')
-      .select('*')
-      .eq('ativo', true)
-      .order('ordem', { ascending: true });
-
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ProfileHeader modelName={model.nome} username={model.redes || `@${model.slug}`} />
         <main className="container mx-auto max-w-5xl px-4 pb-16">
-          <HeroBanners banners={(bannersData as Banner[]) || []} />
+          {/* Banners temporarily disabled — removed from model pages */}
           <ProfileCard model={model as Model} />
           <Suspense fallback={<MediaGridSkeleton />}>
             <ExclusiveContent initialMediaItems={(mediaItems as Media[]) || []} />
